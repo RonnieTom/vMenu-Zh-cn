@@ -1,23 +1,21 @@
 {
-  // Named markers that vMenu puts on everybody's map.
+  // vMenu 在所有人地图上显示的命名标记点。
   //
-  // There are two lists. Blips in "alwaysOn" are always drawn and a player cannot hide them. Blips
-  // in "toggleable" are drawn only while the player has "Location Blips" ticked in the Display
-  // Settings menu, so use that one for anything that is nice to have rather than essential.
+  // 有两个列表。"alwaysOn" 中的标记始终绘制，玩家无法隐藏。"toggleable" 中的标记
+  // 仅在玩家勾选显示设置里的「地点标记」时绘制，适合非必需、可有可无的点。
   //
-  // Each blip takes:
-  //   name         the text shown on the map. Written exactly as you type it, never translated.
-  //   sprite       which icon to use. There is a full list of sprite ids on the FiveM docs site.
-  //   colour       which colour the icon is drawn in.
-  //   scaleOffset  added to the normal size. 0 is normal, a negative number is smaller.
-  //   shortRange   true means it only appears once you are near it, which is what most map
-  //                furniture does. false means it is always visible on the big map.
-  //   x, y, z      where it goes.
+  // 每个标记字段：
+  //   name         地图上显示的文字，按输入原样显示，不会翻译。
+  //   sprite       图标 ID，完整列表见 FiveM 文档。
+  //   colour       图标颜色。
+  //   scaleOffset  相对正常大小的偏移。0 为正常，负数更小。
+  //   shortRange   true 表示靠近才显示（多数地图设施如此）；false 表示大地图上始终可见。
+  //   x, y, z      坐标位置。
   //
-  // Staff with the ManageBlips permission can also add and remove blips from inside the menu, which
-  // rewrites this file. Comments you leave in here are not kept when that happens.
+  // 持有 ManageBlips 权限的管理也可在菜单里增删标记，这会重写本文件。
+  // 那时你留在文件里的注释不会被保留。
   //
-  // Deleting this file is fine. It just means no blips are added.
+  // 删除本文件也可以，只是不会添加任何标记。
 
   "alwaysOn": [],
   "toggleable": [

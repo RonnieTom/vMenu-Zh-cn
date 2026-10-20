@@ -1,35 +1,34 @@
 {
-  // Tunes where bombs, flares, chaff and smoke come out of an aircraft.
+  // 调整飞机炸弹、热诱弹、箔条与烟雾的释放位置。
   //
-  // Every aircraft from GTA Online that has them already works without anything in here. This file is
-  // for addon aircraft, and for the odd vanilla one you want to change. Each key is the spawn name in
-  // lowercase, and every setting inside it is optional, so you only write the ones you want to change.
+  // GTA 在线里自带这些功能的飞机无需在此配置即可工作。本文件用于 addon 飞机，
+  // 以及少数你想改动的原版飞机。键为生成名（小写），内部每项都可选，只写要改的即可。
   //
-  // Players still fit these in the mod shop, like in GTA Online. Bombs come from the "bombs" mod, flares
-  // and chaff from the "countermeasures" mod, and smoke from the smoke option.
+  // 玩家仍需像 GTA 在线一样在改装店安装：炸弹来自 "bombs" 改装，热诱弹与箔条来自
+  // "countermeasures"，烟雾来自烟雾选项。
   //
-  // Deleting this file is fine. Every aircraft then uses the built in positions.
+  // 删除本文件也可以，所有飞机将使用内置位置。
   //
-  // An example, with every setting it knows about:
+  // 完整示例（含全部已知设置）：
   //
   // "myaddonplane": {
-  //   "bombs": true,                         // false turns bombs off on this aircraft
+  //   "bombs": true,                         // false 关闭该机炸弹
   //   "flares": true,
   //   "chaff": true,
   //   "smoke": true,
-  //   "bombPosition": 0.5,                   // where along the belly bombs leave, 0 is the nose and 1 the tail
-  //   "cameraY": 1.0,                        // the bomb camera, forward or back from the centre
-  //   "cameraZ": -1.5,                       // the bomb camera, up or down from the centre
-  //   "flareStartX": [-3.0, -1.5, 1.5, 3.0], // the four flares, from left to right
+  //   "bombPosition": 0.5,                   // 炸弹沿机腹释放位置，0 机头、1 机尾
+  //   "cameraY": 1.0,                        // 炸弹视角相对中心前后
+  //   "cameraZ": -1.5,                       // 炸弹视角相对中心上下
+  //   "flareStartX": [-3.0, -1.5, 1.5, 3.0], // 四枚热诱弹起点，从左到右
   //   "flareStartY": 0.0,
   //   "flareStartZ": 0.0,
-  //   "flareTargetY": -4.0,                  // how far behind the aircraft the flares head
-  //   "chaffSide": [0.2, 0.8, 0.0, 1.0],     // the four chaff bursts, 0 is the left side and 1 the right
-  //   "chaffLength": [0.4, 0.4, 0.45, 0.45], // 0 is the nose and 1 the tail
-  //   "chaffHeight": [1.0, 1.0, 1.4, 1.4],   // metres above the bottom of the aircraft
-  //   "chaffSpread": true,                   // tilts the bursts outwards
+  //   "flareTargetY": -4.0,                  // 热诱弹飞向机后方多远
+  //   "chaffSide": [0.2, 0.8, 0.0, 1.0],     // 四簇箔条，0 左侧、1 右侧
+  //   "chaffLength": [0.4, 0.4, 0.45, 0.45], // 0 机头、1 机尾
+  //   "chaffHeight": [1.0, 1.0, 1.4, 1.4],   // 相对机底高度（米）
+  //   "chaffSpread": true,                   // 向外倾斜扩散
   //   "chaffScale": 10.0,
-  //   "smokeOffset": [0.0, -3.0, 0.0],       // where the smoke trail starts, right, forward and up
+  //   "smokeOffset": [0.0, -3.0, 0.0],       // 烟雾拖尾起点：右、前、上
   //   "smokeScale": 1.0
   // }
 }

@@ -1,52 +1,52 @@
-# Do not delete this folder
+# 请勿删除此文件夹
 
-This is where vMenu puts the permission and setting templates that **plugins** bring along. A plugin is a separate resource somebody wrote that adds its own menus inside vMenu, so its permissions and its settings are not vMenu's own and do not belong in vMenu's `permissions.cfg` and `configuration.cfg`.
+插件带来的权限与设置模板会放在这里。插件是别人写的独立资源，会在 vMenu 内增加自己的菜单，因此其权限与设置不属于 vMenu 本身，也不应写进 vMenu 的 `permissions.cfg` 与 `configuration.cfg`。
 
-vMenu can write files into this folder, but only if it exists, so if you delete this one it cannot make a new one and every plugin's templates will fail to appear.
+vMenu 可以向此文件夹写入文件，但前提是文件夹存在。若你删掉它，vMenu 无法新建，所有插件的模板都不会出现。
 
-## What ends up in here
+## 这里会出现什么
 
-Every plugin that registers gets two files, both named after the resource it lives in:
-
-```
-<resource name>.permissions.cfg.example
-<resource name>.configuration.cfg.example
-```
-
-So a plugin in a resource called `vMenu.ExamplePlugin` gives you `vMenu.ExamplePlugin.permissions.cfg.example` and `vMenu.ExamplePlugin.configuration.cfg.example`.
-
-They are rewritten every time that plugin registers, which is every time it or vMenu starts. 
-Nothing is written while the plugin is not running, so start the plugin first and then come and look. 
-Never edit the `.example` files themselves, your changes are wiped on the next start.
-
-## Using them
-
-The same way as vMenu's own two config files. 
-Copy the file, take the `.example` off the copy's name, edit the copy, and execute it from your `server.cfg` above the line that starts vMenu and it's plugins:
+每个注册成功的插件都会得到两个文件，均以其所在资源名命名：
 
 ```
-# Execute Plugin Configs
+<资源名>.permissions.cfg.example
+<资源名>.configuration.cfg.example
+```
+
+例如资源名为 `vMenu.ExamplePlugin` 的插件会生成 `vMenu.ExamplePlugin.permissions.cfg.example` 与 `vMenu.ExamplePlugin.configuration.cfg.example`。
+
+这些文件会在该插件每次注册时重写（也就是插件或 vMenu 每次启动时）。
+插件未运行时不会写入任何内容，所以请先启动插件再来查看。
+切勿直接编辑 `.example` 文件本身，下次启动时你的修改会被清空。
+
+## 如何使用
+
+用法与 vMenu 自带的两份配置相同。
+复制文件，去掉副本名里的 `.example`，编辑副本，并在 `server.cfg` 中、启动 vMenu 及其插件的那一行之上 exec：
+
+```
+# 执行插件配置
 exec @vMenu.Enhanced/config/plugins/vMenu.ExamplePlugin.permissions.cfg
 exec @vMenu.Enhanced/config/plugins/vMenu.ExamplePlugin.configuration.cfg
 
-# Execute vMenu Enhanced Configs
+# 执行 vMenu Enhanced 配置
 exec @vMenu.Enhanced/config/permissions.cfg
 exec @vMenu.Enhanced/config/configuration.cfg
 
-# Give vMenu Enhanced permission to write files into it's own folder
+# 允许 vMenu Enhanced 写入自己的文件夹
 add_filesystem_permission vMenu.Enhanced write vMenu.Enhanced
 
-# Start vMenu Enhanced and plugins, starting order does not matter
+# 启动 vMenu Enhanced 与插件，启动顺序无关
 ensure vMenu.Enhanced
 ensure vMenu.ExamplePlugin
 ```
 
-I recommend that you keep your plugin's configuration and permissions files separate from your main vMenu configs.
-The reason for this is that if you ever want to disable a plugin, you can simply stop that plugin and remove the `exec` lines for those configs.
-If you put your permissions and configuration inside your main configs instead, then you'll have to go in there and edit them each time you want to enable or disable your plugin.
+建议把插件的配置与权限文件和主 vMenu 配置分开存放。
+这样若要禁用某个插件，只需停止该插件并去掉对应的 `exec` 行即可。
+若把权限与配置写进主配置，每次启用/禁用插件都要进去改一遍。
 
-Each file explains itself at the top, including which plugin it came from.
+每个文件顶部都会说明自身用途，以及来自哪个插件。
 
-## Removing a plugin
+## 移除插件
 
-Delete every file in here whose name starts with that resource's name, and take its `exec` lines back out of your `server.cfg`. Nothing of that plugin is left anywhere else in vMenu's config.
+删除本文件夹中以该资源名开头的全部文件，并从 `server.cfg` 中去掉其 `exec` 行即可。vMenu 配置里不会再留下该插件的其他内容。

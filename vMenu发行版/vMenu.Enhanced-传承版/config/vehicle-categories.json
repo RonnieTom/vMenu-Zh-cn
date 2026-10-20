@@ -1,32 +1,25 @@
 {
-    // Your own vehicle categories for the Vehicle Spawner.
+    // 载具生成器的自定义分类。
     //
-    // By default the spawner groups every vehicle by the class the game itself gives it, so
-    // Compacts, Sedans, Helicopters and so on. Here you can add categories of your own on top of
-    // those. Any vehicle you list below is taken out of its game class and only shows up in your
-    // category instead. Your categories and the game's classes sit in the same list, sorted
-    // alphabetically together.
+    // 默认按游戏自带类别分组（小型车、轿车、直升机等）。可在此额外添加自建分类。
+    // 写在下方的载具会从其游戏类别中移出，只出现在你的分类里。
+    // 自建分类与游戏类别在同一列表中，按字母顺序排列。
     //
-    // The name on the left is what players see in the menu. The list on the right is the vehicle
-    // model names that belong in it. A vehicle can only be in one category, so if you list the same
-    // model twice, the first category wins and the server console tells you about it.
+    // 左侧名称是菜单显示名，右侧列表是属于该分类的载具模型名。
+    // 同一载具只能属于一个分类；若重复列出，以第一个为准，并在服务器控制台提示。
     //
-    // Every category also gets its own permission, generated for you when the server starts. The
-    // example below would create these two:
+    // 每个分类还会在服务器启动时生成独立权限。下方示例会生成这两条：
     //
     //     vMenu.Enhanced.Menus.VehicleSpawner.Categories.police
     //     vMenu.Enhanced.Menus.VehicleSpawner.Categories.emergency_services
     //
-    // As you can see, the permission is your category name in lowercase, with anything that is not
-    // a letter, a digit or an underscore turned into an underscore. You never have to write those
-    // out yourself: they are listed for you in config/permissions.cfg.example, right next to all
-    // the normal ones, each marked with a note saying it came from this file. Granting
-    // vMenu.Enhanced.Menus.VehicleSpawner.Categories.All grants your own categories too.
+    // 权限名是分类名小写，并把非字母/数字/下划线的字符换成下划线。
+    // 无需手写：它们会列在 config/permissions.cfg.example 中，并标注来自本文件。
+    // 授予 vMenu.Enhanced.Menus.VehicleSpawner.Categories.All 也会包含你自建的分类。
     //
-    // One thing to keep in mind: the menu is built once when a player joins, so after changing this
-    // file you have to restart the resource before anybody sees the difference.
+    // 注意：菜单在玩家进服时构建一次，修改本文件后需重启资源才会生效。
     //
-    // Remove the // in front of the two lines below to try it out.
+    // 去掉下面两行前的 // 即可试用。
     //
     // "Police": ["police", "police2", "police3", "policeb"],
     // "Emergency Services": ["ambulance", "firetruk"]

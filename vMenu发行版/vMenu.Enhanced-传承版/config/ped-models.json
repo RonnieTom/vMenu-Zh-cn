@@ -1,34 +1,27 @@
 {
-    // Every ped a player can turn into, and the groups they show up in.
+    // 玩家可切换成的全部人物模型，以及它们所属分组。
     //
-    // This is the whole list. There is no way to ask the game which ped models exist, so vMenu reads
-    // them from here instead. That also means adding your own addon peds is easy: put them in one of
-    // the groups below, or make a group of your own for them.
+    // 这是完整列表。游戏无法枚举有哪些人物模型，因此 vMenu 从本文件读取。
+    // 添加 addon 人物也很简单：放进下方某个分组，或自建分组。
     //
-    // The name on the left of each group, so "Animals" or "Male", is what players see in the menu.
-    // Inside a group, the name on the left is the ped model name and the text on the right is what
-    // shows next to it in the menu. Both are yours to change.
+    // 每个分组左侧名称（如「动物」「男性」）是菜单中显示的分组名。
+    // 分组内左侧是模型名，右侧是菜单旁显示文字，两者都可自行修改。
     //
-    // The order in this file is the order in the menu, for the groups and for the peds inside them.
-    // If you want your own peds at the very top, move their group to the top of this file.
+    // 本文件中的顺序即菜单顺序（分组与组内人物皆然）。
+    // 若希望自建人物置顶，把该分组移到文件最前即可。
     //
-    // Every group also gets its own permission, generated for you when the server starts. "Animals"
-    // for example creates this one:
+    // 每个分组还会在服务器启动时生成独立权限。例如「动物」会生成：
     //
     //     vMenu.Enhanced.Menus.PedModels.Categories.animals
     //
-    // As you can see, the permission is your group name in lowercase, with anything that is not a
-    // letter, a digit or an underscore turned into an underscore. So "Police & Sheriff" becomes
-    // vMenu.Enhanced.Menus.PedModels.Categories.police_sheriff. You never have to work those out
-    // yourself: they are listed for you in config/permissions.cfg.example, right next to all the
-    // normal ones, each marked with a note saying it came from this file. Granting
-    // vMenu.Enhanced.Menus.PedModels.Categories.All grants your own groups too.
+    // 权限名是分组名小写，并把非字母/数字/下划线的字符换成下划线。
+    // 例如「Police & Sheriff」变为 ...Categories.police_sheriff。
+    // 无需自己推算：它们会列在 config/permissions.cfg.example 中，并标注来自本文件。
+    // 授予 vMenu.Enhanced.Menus.PedModels.Categories.All 也会包含你自建的分组。
     //
-    // A ped can only be in one group. If you list the same model twice, the first group wins and the
-    // server console tells you about it.
+    // 同一人物只能属于一个分组。若重复列出，以第一个为准，并在服务器控制台提示。
     //
-    // One thing to keep in mind: the menu is built once when a player joins, so after changing this
-    // file you have to restart the resource before anybody sees the difference.
+    // 注意：菜单在玩家进服时构建一次，修改本文件后需重启资源才会生效。
 
     "动物": {
         "a_c_boar": "野猪",

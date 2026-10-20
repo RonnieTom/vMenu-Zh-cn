@@ -1,21 +1,17 @@
-// The ways of walking players can pick from, under Player, Player Appearance, Walking Style.
+// 玩家可在「玩家 → 玩家外观 → 走路姿势」中选择的走路方式。
 //
-// The name on the left is the clip set the game loads. The text on the right is what players see on
-// the row, so write it however you like.
+// 左侧是游戏加载的 clip set 名，右侧是菜单行显示文字，可按喜好填写。
 //
-// You can add your own. Anything on this list is passed straight to the game, so a clip set your
-// server streams itself works exactly like one that ships with GTA.
+// 可以自行添加。列表中的内容会直接交给游戏，因此服务器自带流式加载的 clip set
+// 与 GTA 自带的用法相同。
 //
-// A word of warning about which peds these suit. A clip set is animation, and animation is made for
-// one shape of skeleton. The move_m@ ones were made for men, the move_f@ ones for women, and none of
-// them were made for a dog. vMenu will let a player try any of them on any ped, and if the game has
-// nothing to load it says so rather than pretending it worked. So feel free to offer everything and
-// let people find out what looks right.
+// 注意适配的人物模型：clip set 是动画，动画按特定骨骼制作。move_m@ 适合男性，
+// move_f@ 适合女性，都不适合狗之类。vMenu 允许在任意人物上尝试；若游戏无法加载
+// 会如实提示，而不会假装成功。可全部提供，让玩家自己试出合适的。
 //
-// Players always get a "Normal" choice on top of this list, which puts back the walk their ped came
-// with. You do not need to add it yourself.
+// 玩家总会在列表顶部看到「正常」选项，用于恢复该人物自带走路姿势，无需自行添加。
 {
-  // Men
+  // 男性
   "move_m@casual@a": "休闲",
   "move_m@business@a": "商务",
   "move_m@tough_guy@": "硬汉",
@@ -30,7 +26,7 @@
   "move_m@hurry@a": "匆忙",
   "move_m@money": "阔绰",
 
-  // Women
+  // 女性
   "move_f@casual@a": "休闲（女）",
   "move_f@business@a": "商务（女）",
   "move_f@sexy@a": "泼辣",
@@ -42,7 +38,7 @@
   "move_f@injured": "受伤（女）",
   "move_f@maneater@": "交际花",
 
-  // Anyone
+  // 通用
   "move_ped_crouched": "蹲姿",
   "move_heels@": "高跟鞋",
   "move_lester_caneup": "拄拐杖"

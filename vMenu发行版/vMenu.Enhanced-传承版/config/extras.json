@@ -1,15 +1,12 @@
 {
-  // Gives the numbered extras on a vehicle a real name.
+  // 为载具上带编号的额外件（extras）起可读名称。
   //
-  // Each key is a vehicle's spawn name in lowercase, and each key inside it is an extra id written
-  // in quotes, pointing at the text you want the menu row to say.
+  // 外层键为载具生成名（小写），内层键为带引号的 extra id，值为菜单行要显示的文字。
   //
-  // This only changes what the rows are called. It never enables, disables or adds an extra, and an
-  // id a vehicle does not actually have simply never shows up. Ids run from 0 to 19, and anything
-  // you leave out keeps its numbered name.
+  // 这只会改显示名称，不会启用/禁用或添加 extra；载具没有的 id 根本不会出现。
+  // id 范围 0–19，未写出的仍显示编号名称。
   //
-  // Deleting this file is fine. Every extra just goes back to being called "Extra 1", "Extra 2" and
-  // so on.
+  // 删除本文件也可以，所有 extra 会恢复为「Extra 1」「Extra 2」这类名称。
 
   "policecharger": {
     "1": "推杠",

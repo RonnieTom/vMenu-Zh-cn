@@ -1,36 +1,29 @@
 {
-    // Models you want to hand out one at a time.
+    // 需要单独分配权限的模型名单。
     //
-    // Normally a model is covered by the permission for the group it sits in, so anybody allowed to
-    // spawn the Sports class gets every sports car, and anybody allowed the Animals ped group gets
-    // every animal. List a model here and it is taken back out of that group's reach and given a
-    // permission of its own instead, which you then grant to whoever should have it.
+    // 通常模型跟所属分组的权限走：能刷「跑车」类就能刷该类全部跑车，
+    // 能刷「动物」人物组就能刷全部动物。把模型写在这里后，会从该分组权限中剥离，
+    // 改为拥有独立权限，再由你授予需要的人。
     //
-    // Nothing else changes. The model stays in the same place in the menu, it just answers to its
-    // own permission now, so everyone else sees it locked.
+    // 其他不变：模型在菜单中的位置不变，只是改为检查自己的权限，其他人会看到锁定。
     //
-    // Names are lowercased for you, but they may only contain letters, digits and underscores. A
-    // name with a space or a dot in it would produce a permission nobody could write, so it is
-    // skipped and the server console tells you about it.
+    // 名称会自动转小写，但只能包含字母、数字和下划线。带空格或点号的名称会生成
+    // 无法书写的权限名，因此会被跳过，并在服务器控制台提示。
     //
-    // Each name below creates one permission, listed for you in config/permissions.cfg.example so
-    // you never have to write it out yourself:
+    // 下方每个名称会生成一条权限，并写进 config/permissions.cfg.example，无需手写：
     //
     //     "vehicles": ["adder"]        ->  vMenu.Enhanced.SupplementalPermissions.VehicleModels.adder
     //     "peds": ["a_c_chop"]         ->  vMenu.Enhanced.SupplementalPermissions.Peds.a_c_chop
     //     "weapons": ["weapon_rpg"]    ->  vMenu.Enhanced.SupplementalPermissions.Weapons.weapon_rpg
     //
-    // Granting vMenu.Enhanced.SupplementalPermissions.VehicleModels.All gives someone every
-    // whitelisted vehicle at once, and the same goes for ...SupplementalPermissions.Peds.All and
-    // ...SupplementalPermissions.Weapons.All. All three are also covered by the menu's own All
-    // permission, so somebody who already has vMenu.Enhanced.Menus.VehicleSpawner.All,
-    // vMenu.Enhanced.Menus.PedModels.All or vMenu.Enhanced.Menus.WeaponOptions.All keeps
-    // everything.
+    // 授予 vMenu.Enhanced.SupplementalPermissions.VehicleModels.All 即一次给全部白名单载具，
+    // Peds.All / Weapons.All 同理。这三项也被各自菜单的 All 权限覆盖，因此已有
+    // vMenu.Enhanced.Menus.VehicleSpawner.All、PedModels.All 或 WeaponOptions.All 的人
+    // 仍拥有全部。
     //
-    // A weapon goes here under the same spawn name it has in config/weapons.json, so
-    // "weapon_rpg", not "rpg".
+    // 武器请使用与 config/weapons.json 相同的生成名，例如 "weapon_rpg"，不是 "rpg"。
     //
-    // These are read once when the server starts, so restart the resource after changing this file.
+    // 本文件在服务器启动时读取一次，修改后请重启资源。
 
     "vehicles": [],
 

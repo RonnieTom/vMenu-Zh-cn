@@ -1,26 +1,20 @@
 {
-    // Every weapon component vMenu knows how to offer.
+    // vMenu 可提供的全部武器配件名称列表。
     //
-    // This is only a list of names. Which weapon accepts which component is asked of the game
-    // itself when a weapon's menu is opened, so you never have to say. A component that no weapon
-    // accepts simply never appears anywhere, and a weapon that accepts nothing just shows its other
-    // options.
+    // 这里只有名称。某武器接受哪些配件会在打开该武器菜单时向游戏询问，无需你指定。
+    // 没有任何武器接受的配件不会出现；没有任何配件的武器仍显示其他选项。
     //
-    // The name on the left is the component's spawn name. The text on the right is what shows for
-    // it, and follows the same rule as config/weapons.json: if it happens to be one of the game's
-    // own label keys, such as "WCT_CLIP2", the game's translation is shown, so the menu follows the
-    // player's language on its own. Anything else is shown exactly as you wrote it, which is what
-    // components for addon weapons usually want.
+    // 左侧是配件生成名，右侧是显示文字，规则与 config/weapons.json 相同：
+    // 若为游戏自带标签键（如 "WCT_CLIP2"），则显示游戏翻译并跟随玩家语言；
+    // 其他文字按原样显示，通常适合 addon 武器配件。
     //
-    // Components have no permissions of their own. Attaching one, removing one, and changing a
-    // weapon's tint are all covered by the single permission
-    // vMenu.Enhanced.Menus.WeaponOptions.Modify, so there is nothing here to grant one at a time.
+    // 配件没有独立权限。安装、拆除与改色泽都由
+    // vMenu.Enhanced.Menus.WeaponOptions.Modify 统一覆盖，无需在此逐项授权。
     //
-    // Listing the same component twice does nothing: the first one wins and the server console
-    // tells you about it. Two different components are allowed to show the same text, which happens
-    // a lot because most weapons call their own magazine "Extended Clip".
+    // 重复列出同一配件无效：以第一个为准，并在服务器控制台提示。
+    // 不同配件可以显示相同文字（很常见，因为多数武器都把弹匣叫「扩容弹匣」）。
     //
-    // These are read once when the server starts, so restart the resource after changing this file.
+    // 本文件在服务器启动时读取一次，修改后请重启资源。
 
     "COMPONENT_ADVANCEDRIFLE_CLIP_01": "WCT_CLIP1",
     "COMPONENT_ADVANCEDRIFLE_CLIP_02": "WCT_CLIP2",

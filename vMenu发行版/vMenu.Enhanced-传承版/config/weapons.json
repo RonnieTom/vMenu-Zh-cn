@@ -1,26 +1,21 @@
 {
-    // Every weapon a player can be given, and the groups they show up in.
+    // 可发给玩家的全部武器，以及它们所属分组。
     //
-    // This is the whole list. There is no way to ask the game which weapons exist, so vMenu reads
-    // them from here instead. That also means adding your own addon weapons is easy: put them in
-    // one of the groups below, or make a group of your own for them. There is no separate list and
-    // no separate menu for addon weapons, they sit right alongside the rest.
+    // 这是完整列表。游戏无法枚举有哪些武器，因此 vMenu 从本文件读取。
+    // 添加 addon 武器也很简单：放进下方某个分组，或自建分组。没有单独的 addon 列表或菜单，
+    // 它们与其他武器并列显示。
     //
-    // The name on the left of each group, so "Handguns" or "Melee", is what players see in the
-    // menu. Nothing in vMenu depends on these eight groups existing, so delete them and write your
-    // own if you would rather.
+    // 每个分组左侧名称（如「手枪」「近战」）是菜单中显示的分组名。
+    // vMenu 不依赖这八个默认分组，可全部删掉后按需自建。
     //
-    // Inside a group, the name on the left is the weapon's spawn name. The text on the right is
-    // what shows next to it. If that text happens to be one of the game's own label keys, such as
-    // "WT_PIST", the game's own translation of it is shown, which means the menu follows whatever
-    // language the player is playing in without you doing anything. Anything else is shown exactly
-    // as you wrote it, which is usually what an addon weapon wants.
+    // 分组内左侧是武器生成名，右侧是旁边显示文字。若右侧恰好是游戏自带标签键
+    //（如 "WT_PIST"），则会显示游戏自带翻译，菜单会跟随玩家语言。其他文字则按原样显示，
+    // 通常适合 addon 武器。
     //
-    // The order in this file is the order in the menu, for the groups and for the weapons inside
-    // them. If you want your own weapons at the very top, move their group to the top of this file.
+    // 本文件中的顺序即菜单顺序（分组与组内武器皆然）。
+    // 若希望自建武器置顶，把该分组移到文件最前即可。
     //
-    // Every group also gets its own permission, generated for you when the server starts. The
-    // groups below would create these eight:
+    // 每个分组还会在服务器启动时生成独立权限。下方分组会生成这八条：
     //
     //     vMenu.Enhanced.Menus.WeaponOptions.Categories.handguns
     //     vMenu.Enhanced.Menus.WeaponOptions.Categories.assault_rifles
@@ -31,24 +26,19 @@
     //     vMenu.Enhanced.Menus.WeaponOptions.Categories.heavy_weapons
     //     vMenu.Enhanced.Menus.WeaponOptions.Categories.sniper_rifles
     //
-    // As you can see, the permission is your group name in lowercase, with anything that is not a
-    // letter, a digit or an underscore turned into an underscore. You never have to write those out
-    // yourself: they are listed for you in config/permissions.cfg.example, right next to all the
-    // normal ones, each marked with a note saying it came from this file. Granting
-    // vMenu.Enhanced.Menus.WeaponOptions.Categories.All grants your own groups too.
+    // 权限名是分组名小写，并把非字母/数字/下划线的字符换成下划线。
+    // 无需手写：它们会列在 config/permissions.cfg.example 中，并标注来自本文件。
+    // 授予 vMenu.Enhanced.Menus.WeaponOptions.Categories.All 也会包含你自建的分组。
     //
-    // If you want to hand out one weapon on its own rather than a whole group, put it in the
-    // "weapons" list in config/model-whitelists.json instead. It stays in the same place in the
-    // menu, it just answers to a permission of its own.
+    // 若要单独发放某把武器而非整个分组，请把它写进 config/model-whitelists.json
+    // 的 "weapons" 列表。菜单位置不变，只是改为检查独立权限。
     //
-    // A weapon can only be in one group. If you list the same one twice, the first group wins and
-    // the server console tells you about it. Spawn names may only contain letters, digits and
-    // underscores, because the same name is what a whitelist permission would be named after.
+    // 同一武器只能属于一个分组。若重复列出，以第一个为准，并在服务器控制台提示。
+    // 生成名只能包含字母、数字和下划线，因为白名单权限也会用同一名称。
     //
-    // weapon_unarmed is deliberately not here. Every player already has it.
+    // 故意不含 weapon_unarmed：每个玩家本来就有徒手。
     //
-    // One thing to keep in mind: the menu is built once when a player joins, so after changing this
-    // file you have to restart the resource before anybody sees the difference.
+    // 注意：菜单在玩家进服时构建一次，修改本文件后需重启资源才会生效。
 
     "手枪": {
         "weapon_pistol": "WT_PIST",
