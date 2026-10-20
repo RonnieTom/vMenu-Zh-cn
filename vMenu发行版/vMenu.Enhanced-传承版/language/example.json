@@ -990,7 +990,7 @@
     "joinleave.left": "~r~{player}~s~ left the server.",
     "joinleave.left.reason": "~r~{player}~s~ left the server. ~c~({reason})",
     "mainmenu.subtitle": "Main Menu",
-    "mainmenu.title": "vMenu Enhanced",
+    "mainmenu.title": "Echo 911 LA",
     "miscsettings.alertdismiss.done": "Cleared ~y~{count}~s~ alert(s) from your screen. Everybody else still has theirs.",
     "miscsettings.alertdismiss.nothing": "There are no alerts on your screen to clear.",
     "miscsettings.alertrespond.alreadytaken": "~g~{staff}~s~ already took alert ~y~#{id}~s~.",

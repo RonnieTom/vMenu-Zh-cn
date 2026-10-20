@@ -847,7 +847,7 @@
     "joinleave.left": "~r~{player}~s~ heeft de server verlaten.",
     "joinleave.left.reason": "~r~{player}~s~ heeft de server verlaten. ~c~({reason})",
     "mainmenu.subtitle": "Hoofdmenu",
-    "mainmenu.title": "vMenu Enhanced",
+    "mainmenu.title": "Echo 911 LA",
     "miscsettings.alertdismiss.done": "~y~{count}~s~ melding(en) van je scherm gehaald. Iedereen ziet die van hem nog wel.",
     "miscsettings.alertdismiss.nothing": "Er staan geen meldingen op je scherm om weg te halen.",
     "miscsettings.alertrespond.alreadytaken": "~g~{staff}~s~ heeft melding ~y~#{id}~s~ al opgepakt.",

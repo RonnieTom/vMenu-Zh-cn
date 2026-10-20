@@ -15,7 +15,7 @@ public static class UserDefaults
     #region Misc Settings
 
     public static StringDefault Language { get; } =
-        new("language") { Default = "en" };
+        new("language") { Default = "zh" };
 
     public static BoolDefault MiscDisableIdleCamera { get; } =
         new("miscDisableIdleCamera") { Default = false };

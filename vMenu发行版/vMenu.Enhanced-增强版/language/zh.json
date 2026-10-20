@@ -869,7 +869,7 @@
     "about.version": "版本",
     "about.version.desc": "本服务器正在运行的 vMenu 版本。",
     "mainmenu.subtitle": "主菜单",
-    "mainmenu.title": "vMenu Enhanced",
+    "mainmenu.title": "Echo 911 LA",
     "miscsettings.alertdismiss.done": "已从屏幕清除 ~y~{count}~s~ 条警报。其他人仍能看到自己的。",
     "miscsettings.alertdismiss.nothing": "屏幕上没有可清除的警报。",
     "miscsettings.alertrespond.alreadytaken": "~g~{staff}~s~ 已接手警报 ~y~#{id}~s~。",

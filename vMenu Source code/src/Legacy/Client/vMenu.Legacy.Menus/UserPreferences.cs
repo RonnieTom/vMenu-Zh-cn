@@ -96,13 +96,16 @@ public static class UserPreferences
         }
 
         Log.Debug(
-            $"[Localization] '{stored}' is not available here, so English is being used. The preference is "
+            $"[Localization] '{stored}' is not available here, so Chinese is being used when offered. The preference is "
             + "kept for servers that do offer it.");
 
-        Localizer.TrySetLanguage(LanguageId.English);
+        // Prefer Simplified Chinese on this build; English remains the last-resort built-in.
+        if (!Localizer.TrySetLanguage(LanguageId.FromCode("zh")))
+        {
+            Localizer.TrySetLanguage(LanguageId.English);
+        }
 
-        // Always resolves in English, since English is what the fallback just selected. Deferred because
-        // this runs before the player has spawned.
+        // Deferred because this runs before the player has spawned.
         _ = Notifications.ShowWhenVisibleAsync(
             NotificationStyle.Warning,
             MenuText.Key(Loc.MiscSettings.LanguageUnavailable, ("language", MenuText.Literal(stored))));
