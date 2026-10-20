@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsResourceRootProject>true</IsResourceRootProject>
+    <IsResourceSideProject>true</IsResourceSideProject>
+    <ResourceSide>client</ResourceSide>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CitizenFX.FiveM.Client" />
+    <PackageReference Include="MenuAPI.FiveM.Enhanced" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\vMenu.Enhanced.Logging\vMenu.Enhanced.Logging.csproj" />
+    <ProjectReference Include="..\vMenu.Enhanced.Events\vMenu.Enhanced.Events.csproj" />
+    <ProjectReference Include="..\vMenu.Enhanced.Menus\vMenu.Enhanced.Menus.csproj" />
+    <ProjectReference Include="..\vMenu.Enhanced.NoClip\vMenu.Enhanced.NoClip.csproj" />
+    <ProjectReference Include="..\vMenu.Enhanced.Permissions\vMenu.Enhanced.Permissions.csproj" />
+    <ProjectReference Include="..\vMenu.Enhanced.Plugins\vMenu.Enhanced.Plugins.csproj" />
+    <ProjectReference Include="..\vMenu.Enhanced.Serialization\vMenu.Enhanced.Serialization.csproj" />
+    <ProjectReference Include="..\vMenu.Enhanced.Storage\vMenu.Enhanced.Storage.csproj" />
+    <ProjectReference Include="..\vMenu.Enhanced.Ticks\vMenu.Enhanced.Ticks.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,53 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Configurations>Release;Debug;NativeHooks</Configurations>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <Authors>Tom Grobbe</Authors>
+    <Copyright>Copyright (C) 2017-2026 Tom Grobbe</Copyright>
+
+    <!-- CI already puts the short commit in the dev version. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+
+    <!--
+      Resource assemblies are never NuGet packages. Only the plugin API projects flip this
+      back on, so `dotnet pack` on the solution cannot ship anything else.
+    -->
+    <IsPackable>false</IsPackable>
+
+    <!--
+      Class libraries normally leave NuGet assemblies in the package cache and
+      only list them in the .deps.json. FiveM has no host to resolve them, so
+      every referenced assembly (MenuAPI, CitizenFX.*, MessagePack, ...) has to
+      sit next to the resource. This copies the whole resolved graph to OutputPath.
+    -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <!-- The .deps.json files are not used, so don't generate them during build. -->
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
+  </PropertyGroup>
+
+  
+  <PropertyGroup Condition="'$(Configuration)' == 'NativeHooks'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+</Project>

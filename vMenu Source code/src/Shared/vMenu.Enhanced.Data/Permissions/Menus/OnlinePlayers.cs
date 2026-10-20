@@ -1,0 +1,56 @@
+﻿namespace vMenu.Enhanced.Data.Permissions.Menus;
+
+// The online players menu and the things you can do to a player from it.
+[PermissionCategory]
+public static class OnlinePlayers
+{
+    [StaffOnly]
+    public const string All = "vMenu.Enhanced.Menus.OnlinePlayers.All";
+
+    public const string Menu = "vMenu.Enhanced.Menus.OnlinePlayers.Menu";
+
+    [StaffOnly]
+    public const string Kick = "vMenu.Enhanced.Menus.OnlinePlayers.Kick";
+
+    [StaffOnly]
+    public const string Kill = "vMenu.Enhanced.Menus.OnlinePlayers.Kill";
+
+    public const string TeleportTo = "vMenu.Enhanced.Menus.OnlinePlayers.TeleportTo";
+
+    [StaffOnly]
+    public const string Summon = "vMenu.Enhanced.Menus.OnlinePlayers.Summon";
+
+    [StaffOnly]
+    public const string SummonIntoVehicle = "vMenu.Enhanced.Menus.OnlinePlayers.SummonIntoVehicle";
+
+    [StaffOnly]
+    public const string TeleportIntoVehicle = "vMenu.Enhanced.Menus.OnlinePlayers.TeleportIntoVehicle";
+
+    [StaffOnly]
+    public const string SetWantedLevel = "vMenu.Enhanced.Menus.OnlinePlayers.SetWantedLevel";
+
+    public const string SendMessage = "vMenu.Enhanced.Menus.OnlinePlayers.SendMessage";
+
+    public const string Waypoint = "vMenu.Enhanced.Menus.OnlinePlayers.Waypoint";
+
+    [StaffOnly]
+    public const string DeleteVehicle = "vMenu.Enhanced.Menus.OnlinePlayers.DeleteVehicle";
+
+    [StaffOnly]
+    public const string ExplodeVehicle = "vMenu.Enhanced.Menus.OnlinePlayers.ExplodeVehicle";
+
+    [StaffOnly]
+    public const string CheckStatus = "vMenu.Enhanced.Menus.OnlinePlayers.CheckStatus";
+
+    [StaffOnly]
+    public const string Identifiers = "vMenu.Enhanced.Menus.OnlinePlayers.Identifiers";
+
+    [StaffOnly]
+    public const string RefreshPermissions = "vMenu.Enhanced.Menus.OnlinePlayers.RefreshPermissions";
+
+    [StaffOnly]
+    public const string TxAdmin = "vMenu.Enhanced.Menus.OnlinePlayers.TxAdmin";
+
+    [StaffOnly]
+    public const string NoClip = "vMenu.Enhanced.Menus.OnlinePlayers.NoClip";
+}

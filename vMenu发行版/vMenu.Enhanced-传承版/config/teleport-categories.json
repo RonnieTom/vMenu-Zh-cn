@@ -1,0 +1,583 @@
+[
+  {
+    "name": "市区",
+    "description": "市区地点",
+    "locations": [
+      {
+        "name": "机场",
+        "description": "洛圣都国际机场",
+        "position": {
+          "x": -1034.65,
+          "y": -2733.21,
+          "z": 20.17
+        }
+      },
+      {
+        "name": "军团广场",
+        "description": "",
+        "position": {
+          "x": 197.78,
+          "y": -934.75,
+          "z": 30.69
+        },
+        "heading": 141.93
+      },
+      {
+        "name": "迷宫银行竞技场",
+        "description": "",
+        "position": {
+          "x": -212.84,
+          "y": -1999.53,
+          "z": 27.76
+        },
+        "heading": 80.07
+      },
+      {
+        "name": "高级豪华汽车",
+        "description": "西米恩的车行",
+        "position": {
+          "x": -61.8,
+          "y": -1112.63,
+          "z": 26.44
+        },
+        "heading": 339.3
+      },
+      {
+        "name": "FIB大楼入口",
+        "description": "",
+        "position": {
+          "x": 92.89,
+          "y": -743.63,
+          "z": 45.75
+        },
+        "heading": 264.97
+      },
+      {
+        "name": "韦斯普奇海滩",
+        "description": "",
+        "position": {
+          "x": -1417.05,
+          "y": -1046.99,
+          "z": 4.63
+        },
+        "heading": 131.02
+      },
+      {
+        "name": "太平洋标准银行",
+        "description": "",
+        "position": {
+          "x": 227.59,
+          "y": 212.4,
+          "z": 105.53
+        },
+        "heading": 298.86
+      },
+      {
+        "name": "韦斯普奇停机坪",
+        "description": "",
+        "position": {
+          "x": -706.23,
+          "y": -1393.53,
+          "z": 5.15
+        },
+        "heading": 127.54
+      },
+      {
+        "name": "太阳港码头",
+        "description": "",
+        "position": {
+          "x": -812.15,
+          "y": -1402.72,
+          "z": 5
+        },
+        "heading": 175.03
+      },
+      {
+        "name": "GWC高尔夫俱乐部",
+        "description": "",
+        "position": {
+          "x": -1329.35,
+          "y": 59.71,
+          "z": 53.54
+        },
+        "heading": 270.6
+      }
+    ]
+  },
+  {
+    "name": "桑迪海岸",
+    "description": "桑迪海岸周边地点",
+    "locations": [
+      {
+        "name": "桑迪海岸机场",
+        "description": "桑迪海岸机场",
+        "position": {
+          "x": 1747.5,
+          "y": 3273.6,
+          "z": 41.15
+        },
+        "heading": 105
+      },
+      {
+        "name": "葡萄籽机场",
+        "description": "",
+        "position": {
+          "x": 2138.48,
+          "y": 4799.26,
+          "z": 41.13
+        },
+        "heading": 118.37
+      },
+      {
+        "name": "船屋",
+        "description": "桑迪海岸船屋",
+        "position": {
+          "x": 1544.9,
+          "y": 3778.9,
+          "z": 34.05
+        },
+        "heading": 26.78
+      },
+      {
+        "name": "和谐镇商店",
+        "description": "",
+        "position": {
+          "x": 1178.53,
+          "y": 2694.49,
+          "z": 37.94
+        },
+        "heading": 88.93
+      },
+      {
+        "name": "叛军电台塔",
+        "description": "",
+        "position": {
+          "x": 742.15,
+          "y": 2574.05,
+          "z": 75.52
+        },
+        "heading": 229.52
+      },
+      {
+        "name": "刺城",
+        "description": "",
+        "position": {
+          "x": 75.91,
+          "y": 3638.6,
+          "z": 39.69
+        },
+        "heading": 14.19
+      },
+      {
+        "name": "You Tool大型五金店",
+        "description": "塞诺拉高速公路五金店",
+        "position": {
+          "x": 2771.42,
+          "y": 3465.26,
+          "z": 55.55
+        },
+        "heading": 70.87
+      },
+      {
+        "name": "人道实验室",
+        "description": "",
+        "position": {
+          "x": 3419.02,
+          "y": 3756.11,
+          "z": 30.57
+        },
+        "heading": 295
+      },
+      {
+        "name": "雷克斯餐厅",
+        "description": "",
+        "position": {
+          "x": 2566.47,
+          "y": 2594.17,
+          "z": 37.86
+        },
+        "heading": 115.89
+      },
+      {
+        "name": "戴维斯石英矿",
+        "description": "",
+        "position": {
+          "x": 2639.93,
+          "y": 2738.06,
+          "z": 40.11
+        },
+        "heading": 303.16
+      },
+      {
+        "name": "灯塔",
+        "description": "",
+        "position": {
+          "x": 3352.07,
+          "y": 5150.98,
+          "z": 20.05
+        },
+        "heading": 280.46
+      }
+    ]
+  },
+  {
+    "name": "山区",
+    "description": "山区地点。",
+    "locations": [
+      {
+        "name": "好麦坞山标志",
+        "description": "好麦坞标志后方。",
+        "position": {
+          "x": 734.25,
+          "y": 1205.23,
+          "z": 326.22
+        },
+        "heading": 169.5
+      },
+      {
+        "name": "伽利略天文台",
+        "description": "",
+        "position": {
+          "x": -421.34,
+          "y": 1138.4,
+          "z": 325.85
+        },
+        "heading": 341.38
+      },
+      {
+        "name": "约西亚山",
+        "description": "约西亚山顶。",
+        "position": {
+          "x": -1181.68,
+          "y": 3855.79,
+          "z": 489.72
+        },
+        "heading": 277.58
+      },
+      {
+        "name": "天体营",
+        "description": "",
+        "position": {
+          "x": -1116.07,
+          "y": 4925.69,
+          "z": 218.19
+        },
+        "heading": 87.47
+      },
+      {
+        "name": "奇利亚德山",
+        "description": "奇利亚德山顶",
+        "position": {
+          "x": 501.75,
+          "y": 5604.6,
+          "z": 797.91
+        },
+        "heading": 176.61
+      },
+      {
+        "name": "戈多山",
+        "description": "戈多山顶。",
+        "position": {
+          "x": 2877.1,
+          "y": 5911.21,
+          "z": 369.62
+        },
+        "heading": 133.11
+      },
+      {
+        "name": "土地法案大坝",
+        "description": "",
+        "position": {
+          "x": 1663.65,
+          "y": 0.66,
+          "z": 173.78
+        },
+        "heading": 302.18
+      }
+    ]
+  },
+  {
+    "name": "兴趣点",
+    "description": "各类景点",
+    "locations": [
+      {
+        "name": "赞库多堡接近路",
+        "description": "赞库多堡入口闸门前。",
+        "position": {
+          "x": -1569.73,
+          "y": 2774.73,
+          "z": 17.26
+        },
+        "heading": 43.2
+      },
+      {
+        "name": "湾景小屋",
+        "description": "湾景小屋 - 帕雷托森林中的餐厅与商店。",
+        "position": {
+          "x": -705.56,
+          "y": 5798,
+          "z": 17.32
+        },
+        "heading": 332.23
+      },
+      {
+        "name": "大麻农场",
+        "description": "",
+        "position": {
+          "x": 2206.77,
+          "y": 5578.26,
+          "z": 53.8
+        },
+        "heading": 262.76
+      },
+      {
+        "name": "奥尼尔牧场",
+        "description": "葡萄籽的奥尼尔牧场",
+        "position": {
+          "x": 2451.9,
+          "y": 4954.57,
+          "z": 44.94
+        },
+        "heading": 33.88
+      },
+      {
+        "name": "桑迪废弃汽车旅馆",
+        "description": "桑迪海岸的废弃汽车旅馆。",
+        "position": {
+          "x": 1611.71,
+          "y": 3601.71,
+          "z": 35.15
+        },
+        "heading": 124.17
+      },
+      {
+        "name": "博林布鲁克监狱",
+        "description": "州立博林布鲁克监狱",
+        "position": {
+          "x": 1849.82,
+          "y": 2585.8,
+          "z": 45.67
+        },
+        "heading": 91.3
+      },
+      {
+        "name": "红杉灯赛车场",
+        "description": "",
+        "position": {
+          "x": 995.01,
+          "y": 2281.88,
+          "z": 53.08
+        },
+        "heading": 299.53
+      },
+      {
+        "name": "马丁·马德拉索牧场",
+        "description": "",
+        "position": {
+          "x": 1381.56,
+          "y": 1147.38,
+          "z": 114.33
+        },
+        "heading": 269.63
+      },
+      {
+        "name": "钻石赌场入口",
+        "description": "",
+        "position": {
+          "x": 913.73,
+          "y": 54.25,
+          "z": 80.9
+        },
+        "heading": 235.38
+      },
+      {
+        "name": "佩罗码头",
+        "description": "",
+        "position": {
+          "x": -1640.33,
+          "y": -1104.6,
+          "z": 13.02
+        },
+        "heading": 142.01
+      },
+      {
+        "name": "香草独角兽（脱衣舞俱乐部）",
+        "description": "",
+        "position": {
+          "x": 133.46,
+          "y": -1305.79,
+          "z": 29.16
+        },
+        "heading": 40.69
+      }
+    ]
+  },
+  {
+    "name": "豪宅",
+    "description": "",
+    "locations": [
+      {
+        "name": "里奇曼别墅",
+        "description": "",
+        "position": {
+          "x": -1692.63,
+          "y": 490.51,
+          "z": 129.02
+        },
+        "heading": 196.47
+      },
+      {
+        "name": "好麦坞宅邸",
+        "description": "",
+        "position": {
+          "x": 543.66,
+          "y": 779.33,
+          "z": 202.23
+        },
+        "heading": 123.4
+      },
+      {
+        "name": "通瓦庄园",
+        "description": "",
+        "position": {
+          "x": -2554.02,
+          "y": 1912.19,
+          "z": 168.95
+        },
+        "heading": 60.21
+      }
+    ]
+  },
+  {
+    "name": "警察局",
+    "description": "",
+    "locations": [
+      {
+        "name": "好麦坞大道警察局",
+        "description": "",
+        "position": {
+          "x": 620.92,
+          "y": 21.65,
+          "z": 88.4
+        },
+        "heading": 160.75
+      },
+      {
+        "name": "任务街警察局",
+        "description": "",
+        "position": {
+          "x": 428.07,
+          "y": -981.7,
+          "z": 30.71
+        },
+        "heading": 266.74
+      },
+      {
+        "name": "韦斯普奇警察局",
+        "description": "",
+        "position": {
+          "x": -1087.35,
+          "y": -792.84,
+          "z": 19.25
+        },
+        "heading": 209.98
+      },
+      {
+        "name": "拉梅萨警察局",
+        "description": "",
+        "position": {
+          "x": 815.37,
+          "y": -1290.51,
+          "z": 26.28
+        },
+        "heading": 272.81
+      },
+      {
+        "name": "桑迪海岸县治安官",
+        "description": "",
+        "position": {
+          "x": 1858.63,
+          "y": 3677.96,
+          "z": 33.7
+        },
+        "heading": 30.94
+      },
+      {
+        "name": "帕雷托湾县治安官",
+        "description": "",
+        "position": {
+          "x": -439.34,
+          "y": 6020.57,
+          "z": 31.49
+        },
+        "heading": 134.54
+      }
+    ]
+  },
+  {
+    "name": "医院",
+    "description": "",
+    "locations": [
+      {
+        "name": "桑迪海岸医疗中心",
+        "description": "",
+        "position": {
+          "x": 1841.61,
+          "y": 3668.8,
+          "z": 33.68
+        },
+        "heading": 30.63
+      },
+      {
+        "name": "帕雷托湾疗养中心",
+        "description": "",
+        "position": {
+          "x": -241.5,
+          "y": 6310.51,
+          "z": 31.46
+        },
+        "heading": 44.57
+      },
+      {
+        "name": "圣菲亚克医院",
+        "description": "",
+        "position": {
+          "x": 1153.07,
+          "y": -1525.89,
+          "z": 34.84
+        },
+        "heading": 146.77
+      },
+      {
+        "name": "洛圣都中央医疗中心",
+        "description": "",
+        "position": {
+          "x": 338.3,
+          "y": -1394.29,
+          "z": 32.51
+        },
+        "heading": 230.04
+      },
+      {
+        "name": "药盒山医疗中心（上层）",
+        "description": "",
+        "position": {
+          "x": 283.45,
+          "y": -579.35,
+          "z": 43.22
+        },
+        "heading": 77.02
+      },
+      {
+        "name": "药盒山医疗中心（下层）",
+        "description": "",
+        "position": {
+          "x": 368.61,
+          "y": -603.38,
+          "z": 28.87
+        },
+        "heading": 33.76
+      }
+    ]
+  }
+]

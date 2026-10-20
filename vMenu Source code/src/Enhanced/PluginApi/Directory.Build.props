@@ -1,0 +1,23 @@
+<Project>
+  <!--
+    MSBuild stops at the FIRST Directory.Build.props it finds walking up from a
+    project, so this file shadows src/Directory.Build.props for everything under
+    src/Enhanced/PluginApi/. Import the parent explicitly to keep the shared settings.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('$(MSBuildThisFile)', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!--
+      These are the publishable NuGet packages plugin authors reference. They build
+      outside the resource folder: vMenu itself pulls PluginContracts in through a
+      ProjectReference, which copies it next to the referencing side's assemblies.
+    -->
+    <OutputPath>$(IntermediateRoot)$(MSBuildProjectName)\</OutputPath>
+    <NuspecFile>$(MSBuildProjectName).nuspec</NuspecFile>
+    <PluginApiSide Condition="$(MSBuildProjectName.EndsWith('ClientAPI'))">Client</PluginApiSide>
+    <PluginApiSide Condition="$(MSBuildProjectName.EndsWith('ServerAPI'))">Server</PluginApiSide>
+  </PropertyGroup>
+
+  <Import Project="$(RepoRoot)src\PluginPackage.props" />
+
+</Project>

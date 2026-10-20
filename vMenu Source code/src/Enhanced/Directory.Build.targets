@@ -1,0 +1,23 @@
+<Project>
+
+  <PropertyGroup>
+    <ResourceManifest>$(RepoRoot)assets\enhanced\fxmanifest.lua</ResourceManifest>
+  </PropertyGroup>
+
+  <!-- Client projects share one output folder, so a second copier of MenuAPI's fonts races Core's on a rebuild. -->
+  <ItemGroup Condition="'$(IsResourceRootProject)' != 'true'">
+    <PackageReference Update="MenuAPI.FiveM.Enhanced" ExcludeAssets="contentFiles" />
+  </ItemGroup>
+
+  <Target Name="SetPluginNuspecProperties" BeforeTargets="GenerateNuspec" DependsOnTargets="InitializeSourceControlInformation" Condition="'$(PluginApiSide)' != ''">
+    <PropertyGroup>
+      <EnhancedCitizenFxVersion>@(PackageVersion->WithMetadataValue('Identity', 'CitizenFX.FiveM.$(PluginApiSide)')->'%(Version)')</EnhancedCitizenFxVersion>
+      <LegacyCitizenFxVersion>@(PackageVersion->WithMetadataValue('Identity', 'CitizenFX.Core.$(PluginApiSide)')->'%(Version)')</LegacyCitizenFxVersion>
+      <NuspecProperties>version=$(PackageVersion);commit=$(SourceRevisionId);repoRoot=$(RepoRoot);enhancedOutput=$(OutputPath);legacyOutput=$(RepoRoot)build\intermediate\legacy\vMenu.Legacy.$(PluginApiSide)API\;enhancedCitizenFx=$(EnhancedCitizenFxVersion);legacyCitizenFx=$(LegacyCitizenFxVersion)</NuspecProperties>
+    </PropertyGroup>
+  </Target>
+
+  <Import Project="$(MSBuildThisFileDirectory)Assemblies.targets" />
+  <Import Project="$(RepoRoot)src\Resource.targets" />
+
+</Project>

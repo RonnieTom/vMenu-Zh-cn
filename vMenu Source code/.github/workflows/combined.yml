@@ -1,0 +1,669 @@
+name: CI/CD
+
+# A push to main builds vMenu Enhanced for FiveM Enhanced and for FiveM Legacy, and releases both under
+# one version on one Enhanced tag. The original vMenu lives on the legacy branch and is no longer built.
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "docs/**"
+      - ".github/workflows/docs.yml"
+  # Push filters never fire on an empty commit, this is the way to release without a code change.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run at a time, never cancelled halfway. GitHub does drop a queued run when a newer one queues
+# behind it, which is fine because the newer run releases everything since the previous tag.
+concurrency:
+  group: combined-release
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  plan:
+    name: Plan
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    outputs:
+      release:      ${{ steps.plan.outputs.release }}
+      ref:          ${{ steps.plan.outputs.ref }}
+      version:      ${{ steps.plan.outputs.version }}
+      assembly_ver: ${{ steps.plan.outputs.assembly_ver }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Always the previous tag plus one, never a count of commits, so a release never skips a number.
+      # A +semver: major or +semver: minor in any commit since the tag bumps that part instead. When every
+      # commit since the tag says +semver: none, nothing is released.
+      - name: Settle the version
+        id: plan
+        shell: bash
+        env:
+          REF: ${{ github.sha }}
+        run: |
+          git fetch origin --tags --force
+
+          PREFIX='enhanced-v'
+
+          bump_for() {
+            local range="$1" messages sha
+            messages=$(git log --format=%B "$range")
+            if grep -qiE '\+semver:[[:space:]]*(breaking|major)' <<< "$messages"; then
+              echo major
+              return
+            fi
+            if grep -qiE '\+semver:[[:space:]]*(feature|minor)' <<< "$messages"; then
+              echo minor
+              return
+            fi
+            for sha in $(git rev-list "$range"); do
+              if ! git log -1 --format=%B "$sha" | grep -qiE '\+semver:[[:space:]]*(none|skip)'; then
+                echo patch
+                return
+              fi
+            done
+            echo none
+          }
+
+          # A pre-release tag like 0.0.1-alpha.5 is followed by its own release, 0.0.1, on a patch.
+          next_version() {
+            local base="$1" bump="$2" core major minor patch
+            core="${base%%-*}"
+            IFS=. read -r major minor patch <<< "$core"
+            case "$bump" in
+              major) echo "$((major + 1)).0.0" ;;
+              minor) echo "$major.$((minor + 1)).0" ;;
+              *)
+                if [ "$core" != "$base" ]; then
+                  echo "$core"
+                else
+                  echo "$major.$minor.$((patch + 1))"
+                fi
+                ;;
+            esac
+          }
+
+          TAG=$(git describe --tags --abbrev=0 --match "${PREFIX}[0-9]*" "$REF" 2>/dev/null || true)
+
+          if [ -n "$TAG" ]; then
+            BUMP=$(bump_for "$TAG..$REF")
+            VERSION=$(next_version "${TAG#"$PREFIX"}" "$BUMP")
+          else
+            BUMP=$(bump_for "$REF")
+            VERSION=$(next_version "0.0.0" "$BUMP")
+          fi
+
+          if [ "$BUMP" = "none" ] && [ -n "$TAG" ]; then
+            echo "Nothing since $TAG needs a new version." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$PREFIX$VERSION" >/dev/null; then
+            echo "::error::The next version $PREFIX$VERSION is already tagged, but $TAG is the newest tag on main."
+            exit 1
+          fi
+
+          ASSEMBLY="${VERSION%%-*}"
+
+          echo "ref=$REF version=$VERSION ($BUMP bump from ${TAG:-nothing})"
+          {
+            echo "release=true"
+            echo "ref=$REF"
+            echo "version=$VERSION"
+            echo "assembly_ver=$ASSEMBLY"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "## vMenu Enhanced"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Version | \`${VERSION}\` ($BUMP bump from ${TAG:-nothing}) |"
+            echo "| Assembly version | \`${ASSEMBLY}\` |"
+            echo "| Tag | \`${PREFIX}${VERSION}\` |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: Build vMenu Enhanced
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Set version
+        id: version
+        shell: bash
+        run: |
+          VERSION="${{ needs.plan.outputs.version }}"
+          {
+            echo "version=$VERSION"
+            echo "assembly_ver=${{ needs.plan.outputs.assembly_ver }}"
+            echo "zip_name=vMenu-Enhanced-v${VERSION}.zip"
+            echo "legacy_zip_name=vMenu-Enhanced-Legacy-v${VERSION}.zip"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Restore
+        run: dotnet restore vMenu.Enhanced.slnx
+
+      - name: Build
+        shell: bash
+        run: |
+          dotnet build vMenu.Enhanced.slnx -c Release --no-restore \
+            -p:Version="${{ steps.version.outputs.version }}" \
+            -p:AssemblyVersion="${{ steps.version.outputs.assembly_ver }}" \
+            -p:FileVersion="${{ steps.version.outputs.assembly_ver }}"
+
+      # Reported here but never blocking a release, pull requests are where this check fails a build.
+      - name: Check the Legacy client against FiveM's sandbox
+        continue-on-error: true
+        shell: bash
+        run: |
+          dotnet run --project tools/LegacyChecks -c Release -- --verify-il build/legacy/vMenu.Enhanced/client
+          dotnet run --project tools/LegacyChecks -c Release --no-build -- --check-refs build/legacy/vMenu.Enhanced/client
+
+      # Same version as the resource zips, so a plugin author can pin the package matching their server.
+      - name: Pack plugin API packages
+        shell: bash
+        run: |
+          for project in src/Shared/vMenu.Enhanced.PluginContracts src/Enhanced/PluginApi/vMenu.Enhanced.ClientAPI src/Enhanced/PluginApi/vMenu.Enhanced.ServerAPI; do
+            dotnet pack "$project/$(basename "$project").csproj" -c Release --no-build \
+              -p:Version="${{ steps.version.outputs.version }}" \
+              -p:PackageVersion="${{ steps.version.outputs.version }}" \
+              -o packages
+          done
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: enhanced-packages
+          path: packages/*.nupkg
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # LF only, the example plugin's update check reads the version off the first line.
+      - name: Build the Lua and JavaScript plugin APIs
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir -p npm-package build/enhanced/vMenu.Enhanced/plugin-api build/legacy/vMenu.Enhanced/plugin-api
+
+          (
+            cd src/Shared/vMenu.Enhanced.JsAPI
+            npm ci --no-audit --no-fund
+            npm version "$VERSION" --no-git-tag-version --allow-same-version
+            npm run check
+            npm run build
+            npm pack --pack-destination ../../../npm-package
+          )
+
+          tr -d '\r' < src/Shared/vMenu.Enhanced.JsAPI/dist/vmenu.js > build/enhanced/vMenu.Enhanced/plugin-api/vmenu.js
+          sed "s/versiongoeshere/$VERSION/g" src/Shared/vMenu.Enhanced.LuaAPI/vmenu.lua | tr -d '\r' > build/enhanced/vMenu.Enhanced/plugin-api/vmenu.lua
+          cp build/enhanced/vMenu.Enhanced/plugin-api/vmenu.* build/legacy/vMenu.Enhanced/plugin-api/
+          head -n 1 build/enhanced/vMenu.Enhanced/plugin-api/vmenu.lua build/enhanced/vMenu.Enhanced/plugin-api/vmenu.js
+
+      - name: Upload npm package
+        uses: actions/upload-artifact@v4
+        with:
+          name: enhanced-npm
+          path: npm-package/*.tgz
+
+      - name: Translation coverage
+        if: always()
+        shell: pwsh
+        run: |
+          $path = 'build/intermediate/enhanced/translation-coverage.json'
+
+          if (-not (Test-Path $path)) {
+            Write-Host 'No translation coverage was produced by this build.'
+            exit 0
+          }
+
+          $report = Get-Content $path -Raw | ConvertFrom-Json
+          $total = $report.totalKeys
+          $behind = @($report.languages | Where-Object { $_.missing -gt 0 -or $_.orphans -gt 0 -or $_.unreadable })
+
+          $lines = @()
+          $lines += "## Translation coverage"
+          $lines += ""
+          $lines += if ($behind.Count -eq 0) {
+            "All languages cover every one of the $total English keys."
+          } else {
+            "$($behind.Count) of $($report.languages.Count) languages are behind the $total English keys."
+          }
+          $lines += ""
+          $lines += "| Language | Translated | Missing | Stale keys |"
+          $lines += "| --- | ---: | ---: | ---: |"
+
+          foreach ($language in $report.languages) {
+            $name = "$($language.nativeName) (``$($language.code)``)"
+
+            if ($language.unreadable) {
+              $lines += "| $name | file could not be read | | |"
+              continue
+            }
+
+            $mark = if ($language.missing -eq 0) { '0' } else { "**$($language.missing)**" }
+            $lines += "| $name | $($language.translated)/$total | $mark | $($language.orphans) |"
+          }
+
+          $lines += ""
+          $lines += "_Missing keys fall back to English, so nothing is broken by a gap here._"
+
+          $lines -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      # The build itself copies fxmanifest.lua, README.md and LICENSE.md into the resource (CopyResourceRootFiles).
+      - name: Stamp version and zip
+        shell: pwsh
+        run: |
+          $resources = @(
+            @('build/enhanced/vMenu.Enhanced', '${{ steps.version.outputs.zip_name }}'),
+            @('build/legacy/vMenu.Enhanced', '${{ steps.version.outputs.legacy_zip_name }}'))
+
+          foreach ($resource in $resources) {
+            (Get-Content "$($resource[0])/fxmanifest.lua") -replace 'versiongoeshere', '${{ steps.version.outputs.version }}' |
+              Set-Content -Encoding ASCII "$($resource[0])/fxmanifest.lua"
+            Compress-Archive -Path "$($resource[0])/*" -DestinationPath $resource[1] -Force
+          }
+
+      # Stamped with the release URL by the release job. Both recipes share the ready to use permissions
+      # and configuration, because both builds read exactly the same files.
+      - name: Prepare txAdmin recipes
+        shell: bash
+        run: |
+          mkdir -p txadmin
+
+          cp assets/txadmin/recipe.yaml        txadmin/txadmin-vmenu-enhanced-recipe.yaml
+          cp assets/txadmin/server.cfg         txadmin/txadmin-vmenu-enhanced-server.cfg
+          cp assets/txadmin/legacy-recipe.yaml txadmin/txadmin-vmenu-legacy-recipe.yaml
+          cp assets/txadmin/legacy-server.cfg  txadmin/txadmin-vmenu-legacy-server.cfg
+
+          dotnet run --project tools/ConfigDefaults/ConfigDefaults.csproj -c Release --no-launch-profile -- txadmin-ready --ready
+          mv txadmin-ready/permissions.cfg   txadmin/txadmin-vmenu-enhanced-permissions.cfg
+          mv txadmin-ready/configuration.cfg txadmin/txadmin-vmenu-enhanced-configuration.cfg
+
+      - name: Upload zips
+        uses: actions/upload-artifact@v4
+        with:
+          name: enhanced-zip
+          path: |
+            ${{ steps.version.outputs.zip_name }}
+            ${{ steps.version.outputs.legacy_zip_name }}
+            txadmin/
+
+  release:
+    name: Release
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    outputs:
+      release_url: ${{ steps.release.outputs.release_url }}
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      VERSION: ${{ needs.plan.outputs.version }}
+      REF: ${{ needs.plan.outputs.ref }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all tags
+        run: git fetch origin --tags --force
+
+      - name: Download zips
+        uses: actions/download-artifact@v4
+        with:
+          name: enhanced-zip
+          path: release-assets
+
+      # Before tagging, so the range is right.
+      - name: Generate changelog
+        shell: bash
+        run: |
+          PREVIOUS=$(git tag --list 'enhanced-v[0-9]*' --sort=-version:refname --merged "$REF" | head -n 1)
+          echo "Changelog range starts at: ${PREVIOUS:-<none, full history>}" >&2
+          if [ -n "$PREVIOUS" ]; then RANGE="$PREVIOUS..$REF"; else RANGE="$REF"; fi
+
+          git log "$RANGE" --pretty=format:'- `%h` (%an) %s' > changelog.txt
+          cat changelog.txt
+          echo ""
+
+          : > breaking.txt
+          for sha in $(git log "$RANGE" --format='%H'); do
+            subject=$(git log -1 "$sha" --format='%s')
+            note=$(git log -1 "$sha" --format='%b' \
+              | awk '/^BREAKING[ -]CHANGE:/ { flag = 1; sub(/^BREAKING[ -]CHANGE:[[:space:]]*/, "") } flag' \
+              | paste -sd ' ' - \
+              | sed 's/[[:space:]]*$//')
+            if [ -z "$note" ] && ! echo "$subject" | grep -qE '^[a-zA-Z]+(\([^)]*\))?!:'; then
+              continue
+            fi
+            echo "- \`$(git log -1 "$sha" --format='%h')\` $subject" >> breaking.txt
+            if [ -n "$note" ]; then
+              echo "  $note" >> breaking.txt
+            fi
+          done
+
+      - name: Create and push the tag
+        shell: bash
+        run: |
+          TAG="enhanced-v$VERSION"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping."
+          else
+            git tag "$TAG" "$REF"
+            git push origin "$TAG"
+            echo "Pushed tag $TAG."
+          fi
+
+      # A rerun finds its release already there and updates it in place.
+      - name: Create or update the release
+        id: release
+        shell: bash
+        run: |
+          TAG="enhanced-v$VERSION"
+          TITLE="vMenu Enhanced v$VERSION"
+          ENHANCED_ZIP="vMenu-Enhanced-v$VERSION.zip"
+          LEGACY_ZIP="vMenu-Enhanced-Legacy-v$VERSION.zip"
+
+          {
+            if [ -s breaking.txt ]; then
+              echo "> [!WARNING]"
+              echo "> **This release contains breaking changes.** Read these before updating."
+              echo ">"
+              sed 's/^/> /' breaking.txt
+              echo ""
+            fi
+
+            echo "One version of vMenu Enhanced, built for both kinds of FiveM server. Pick the zip that matches yours."
+            echo ""
+            echo "| Your server runs | Download |"
+            echo "| --- | --- |"
+            echo "| FiveM Enhanced (GTA V Enhanced) | \`$ENHANCED_ZIP\` |"
+            echo "| Regular FiveM (FiveM Legacy) | \`$LEGACY_ZIP\` |"
+            echo ""
+            echo "Setting up a new server? The txAdmin recipes \`txadmin-vmenu-enhanced-recipe.yaml\` and \`txadmin-vmenu-legacy-recipe.yaml\` install this version with the official plugins. See [Getting Started](https://docs.vespura.com/vmenu/enhanced/getting-started/)."
+            echo ""
+            echo "Writing a plugin? The \`plugin-api\` folder in either zip holds \`vmenu.lua\` and \`vmenu.js\`, the plugin API for Lua and JavaScript. C# and TypeScript get the same version from NuGet and npm. See the [plugin docs](https://docs.vespura.com/vmenu/enhanced/plugins/developing/)."
+            echo ""
+            echo "Looking for the original vMenu, v3.9.2 and older? It is no longer updated, see the [legacy branch](https://github.com/$GH_REPO/tree/legacy) and its [docs](https://docs.vespura.com/vmenu/legacy)."
+            echo ""
+            echo "## Changes in vMenu Enhanced v$VERSION"
+            cat changelog.txt
+            echo ""
+            echo ""
+            echo "Docs: [vMenu Enhanced](https://docs.vespura.com/vmenu/enhanced)."
+          } > release_notes.md
+
+          ASSETS=("release-assets/$ENHANCED_ZIP" "release-assets/$LEGACY_ZIP")
+
+          # The recipe names and their place in the release can never change, because txAdmin links to them
+          # under /releases/latest/download/. What they download is pinned to this release, so a recipe and
+          # its files always match.
+          RELEASE_URL_BASE="https://github.com/$GH_REPO/releases/download/$TAG"
+
+          for FILE in release-assets/txadmin/txadmin-vmenu-*; do
+            [ -f "$FILE" ] || continue
+
+            case "$(basename "$FILE")" in
+              txadmin-vmenu-legacy-*) ZIP="$LEGACY_ZIP" ;;
+              *)                      ZIP="$ENHANCED_ZIP" ;;
+            esac
+
+            sed -i \
+              -e "s|__VMENU_RELEASE_URL__|$RELEASE_URL_BASE|g" \
+              -e "s|__VMENU_VERSION__|$VERSION|g" \
+              -e "s|__VMENU_ZIP__|$ZIP|g" \
+              "$FILE"
+          done
+
+          # Only the recipes are assets of their own, everything they install comes out of one zip.
+          for FILE in release-assets/txadmin/txadmin-vmenu-enhanced-recipe.yaml release-assets/txadmin/txadmin-vmenu-legacy-recipe.yaml; do
+            if [ ! -f "$FILE" ]; then
+              echo "::error::$(basename "$FILE") is missing, txAdmin would lose its recipe."
+              exit 1
+            fi
+            ASSETS+=("$FILE")
+          done
+
+          TXADMIN_FILES=$(find release-assets/txadmin -maxdepth 1 -type f ! -name '*-recipe.yaml' -printf '%f\n')
+          (cd release-assets/txadmin && zip -q -X ../txadmin-files.zip $TXADMIN_FILES)
+          unzip -l release-assets/txadmin-files.zip
+          ASSETS+=("release-assets/txadmin-files.zip")
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, updating it."
+            gh release edit "$TAG" --title "$TITLE" --notes-file release_notes.md
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+          else
+            gh release create "$TAG" --verify-tag --title "$TITLE" --notes-file release_notes.md "${ASSETS[@]}"
+          fi
+
+          RELEASE_URL=$(gh release view "$TAG" --json url --jq .url)
+          echo "release_url=$RELEASE_URL" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Release"
+            echo ""
+            echo "[$TITLE]($RELEASE_URL) on tag \`$TAG\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish-nuget:
+    name: Publish NuGet packages
+    needs: [plan, release]
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          name: enhanced-packages
+          path: packages
+
+      - name: NuGet login (trusted publishing)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: TomGrobbe
+
+      - name: Push packages
+        shell: bash
+        run: |
+          dotnet nuget push "packages/*.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" \
+            --skip-duplicate
+
+  publish-npm:
+    name: Publish npm package
+    needs: [plan, release]
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: enhanced-npm
+          path: npm-package
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing, so no token: npm checks this workflow against the package's trusted publisher.
+      - name: Publish
+        shell: bash
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          shopt -s nullglob
+          PACKAGES=(npm-package/*.tgz)
+
+          if [ ${#PACKAGES[@]} -eq 0 ]; then
+            echo "::error::The build produced no npm package."
+            exit 1
+          fi
+
+          if npm view "@vespura/vmenu-plugin@$VERSION" version >/dev/null 2>&1; then
+            echo "@vespura/vmenu-plugin $VERSION is already published."
+            exit 0
+          fi
+
+          npm publish "./${PACKAGES[0]}" --access public --provenance
+
+  notify:
+    name: Discord Notification
+    needs: [plan, build, release, publish-nuget, publish-npm]
+    if: always() && needs.plan.result != 'skipped'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord notification
+        shell: bash
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          RELEASE_RESULT: ${{ needs.release.result }}
+          NUGET_RESULT: ${{ needs.publish-nuget.result }}
+          NPM_RESULT: ${{ needs.publish-npm.result }}
+          VERSION: ${{ needs.plan.outputs.version }}
+          RELEASE: ${{ needs.plan.outputs.release }}
+          PLAN_RESULT: ${{ needs.plan.result }}
+          RELEASE_URL: ${{ needs.release.outputs.release_url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL not configured, skipping."
+            exit 0
+          fi
+
+          icon() {
+            case "$1" in
+              success)   echo "✅" ;;
+              cancelled) echo "⚠️" ;;
+              skipped)   echo "⏭️" ;;
+              *)         echo "❌" ;;
+            esac
+          }
+
+          FAILED=false
+          CANCELLED=false
+          for RESULT in "$PLAN_RESULT" "$BUILD_RESULT" "$RELEASE_RESULT" "$NUGET_RESULT" "$NPM_RESULT"; do
+            case "$RESULT" in
+              cancelled) CANCELLED=true ;;
+              success|skipped) ;;
+              *) FAILED=true ;;
+            esac
+          done
+
+          if [ "$RELEASE" != "true" ] && [ "$FAILED" = "false" ] && [ "$CANCELLED" = "false" ]; then
+            COLOR=9807270
+            STATUS_TEXT="No new version, nothing was released."
+          elif [ "$CANCELLED" = "true" ]; then
+            COLOR=16776960
+            STATUS_TEXT="Build cancelled."
+          elif [ "$FAILED" = "true" ]; then
+            COLOR=13632027
+            STATUS_TEXT="Build FAILED!"
+          else
+            COLOR=4502298
+            STATUS_TEXT="Build passed!"
+          fi
+
+          if [ -n "$RELEASE_URL" ] && [ "$RELEASE_RESULT" = "success" ]; then
+            LINK_NAME="GitHub Release"
+            LINK_URL="$RELEASE_URL"
+          else
+            LINK_NAME="Build Run"
+            LINK_URL="$RUN_URL"
+          fi
+
+          SHA="${{ github.sha }}"
+
+          # Discord rejects field values over 1024 characters, squash merges easily get there.
+          COMMIT_SUBJECT=$(printf '%s' "${COMMIT_MSG:-Manual run}" | head -n 1)
+          if [ "${#COMMIT_SUBJECT}" -gt 256 ]; then
+            COMMIT_SUBJECT="${COMMIT_SUBJECT:0:253}..."
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg  title      "vMenu Enhanced v${VERSION:-?}" \
+            --arg  desc       "$STATUS_TEXT" \
+            --argjson color   "$COLOR" \
+            --arg  actor      "${{ github.actor }}" \
+            --arg  actor_url  "https://github.com/${{ github.actor }}" \
+            --arg  build      "$(icon "$BUILD_RESULT") $BUILD_RESULT" \
+            --arg  nuget      "$(icon "$NUGET_RESULT") $NUGET_RESULT" \
+            --arg  npm        "$(icon "$NPM_RESULT") $NPM_RESULT" \
+            --arg  branch     "${{ github.ref_name }}" \
+            --arg  link_name  "$LINK_NAME" \
+            --arg  link_url   "$LINK_URL" \
+            --arg  short_sha  "${SHA:0:7}" \
+            --arg  commit_url "https://github.com/${{ github.repository }}/commit/$SHA" \
+            --arg  commit_msg "$COMMIT_SUBJECT" \
+            '{
+              embeds: [{
+                title:       $title,
+                description: $desc,
+                color:       $color,
+                author: { name: ("Committed by " + $actor), url: $actor_url },
+                fields: [
+                  { name: "Build",    value: $build,  inline: true },
+                  { name: "NuGet",    value: $nuget,  inline: true },
+                  { name: "npm",      value: $npm,    inline: true },
+                  { name: "Branch",   value: $branch, inline: true },
+                  { name: $link_name, value: ("[Link](" + $link_url + ")"), inline: true },
+                  { name: "Commit",   value: ("[`" + $short_sha + "`](" + $commit_url + ") " + $commit_msg), inline: false }
+                ]
+              }]
+            }')
+
+          curl -fsSL -H "Content-Type: application/json" -X POST -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"

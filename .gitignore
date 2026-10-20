@@ -1,0 +1,16 @@
+# Nested upstream backup (not needed on GitHub)
+**/.git.bak-upstream/
+
+# Build intermediates inside source tree
+vMenu Source code/build/
+vMenu Source code/**/bin/
+vMenu Source code/**/obj/
+vMenu Source code/.vs/
+vMenu Source code/**/node_modules/
+
+# OS / editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.user
+*.suo

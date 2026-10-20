@@ -1,0 +1,54 @@
+---
+title: "Key Bindings"
+description: "The keys vMenu Enhanced uses by default, and how you and your players can change them."
+---
+
+Everything vMenu Enhanced puts on a key is a real FiveM key binding. Players can rebind any of them for themselves under **Settings, Key Bindings, FiveM** in the pause menu, and for some of them you can change the starting key for everybody with a convar.
+
+## The defaults
+
+| What it does | Keyboard | Controller | Convar |
+| --- | --- | --- | --- |
+| Open and close the menu | `M` | not bound | `vMenu.Enhanced.KeyBindings.MenuToggleKey` |
+| Turn noclip on and off | `F2` | not bound | `vMenu.Enhanced.KeyBindings.NoClipToggleKey` |
+| Run the teleport the player picked | `F10` | not bound | `vMenu.Enhanced.KeyBindings.TeleportKey` |
+| Flip a helmet visor, held | `F11` | D-pad right | none |
+| Expand or zoom the minimap | `Z` | D-pad down | none |
+| Point your finger | `B` | right stick click | none |
+| Character creator auto camera | `N` | right bumper | none |
+| Pick up a snowball | `G` | D-pad right | none |
+| Switch the weather forecast between off, compact and full | `=` | not bound | none |
+| Toggle the engine of the vehicle you are in | `Right Ctrl` | not bound | none |
+| Spawn vehicles inside or outside | `Delete` | not bound | none |
+| Keep or replace the previous vehicle | `End` | not bound | none |
+
+Noclip also uses `W`, `S`, `A`, `D`, `Q`, `Z`, `Left Shift`, `Left Ctrl` and `H` while it is switched on. Those are ordinary bindings too, so they show up in the same settings list.
+
+## Changing a default
+
+Put the convar in your `server.cfg` **before** the line that starts vMenu Enhanced:
+
+```ini
+setr vMenu.Enhanced.KeyBindings.TeleportKey "F7"
+setr vMenu.Enhanced.KeyBindings.NoClipToggleKey "F3"
+ensure vMenu.Enhanced
+```
+
+Key names come from the [FiveM keyboard list](https://docs.fivem.net/docs/game-references/input-mapper-parameter-ids/keyboard/). These are keyboard only, there is no controller button to go with them.
+
+:::caution[A default only applies to players who never changed it]
+FiveM remembers each player's own choice and that choice always wins. Somebody who already rebound a key by hand keeps their key, and has to change it themselves. This matters most for the teleport key, which used to be `F11` and is now `F10`. Anybody who deliberately set teleport to `F11` in an older build now has it sitting on top of the visor key until they move one of the two.
+:::
+
+## The keys with no convar
+
+The minimap, visor, pointing, auto camera, snowball, weather forecast, engine and vehicle spawner keys have no convar and will not get one. They are personal comfort keys rather than something a server needs a say in, most defaults match GTA Online, and every player can move them in the pause menu.
+
+- **Minimap.** Players choose under **Display Settings** whether the key expands the radar or zooms it out. The effect lasts 10 seconds, or until the key is pressed again.
+- **Visor.** Some multiplayer ped helmets have a visor or gadget. Hold the key while on foot or on a motorcycle to flip it, just like GTA Online.
+- **Pointing.** Press once to point your finger at whatever you are looking at, press again to stop. Players switch it on under **Misc Settings**, and it does nothing while it is off. Your hands have to be empty, because pointing with a weapon out breaks the aiming animation, so it also stops on its own the moment you pull one out.
+- **Auto camera.** Only does something while the character creator is open. It is the same switch as **Disable Auto Camera** at the top of the creator page, and the choice is remembered between sessions.
+- **Snowball.** Only does something while there is snow on the ground. Press it to scoop up a snowball, the same way you would in the game's own snow event.
+- **Weather forecast.** Every press moves the forecast one step along. When it is off, it comes on in the small compact style. Press again and you get the full panel, and one more press turns it off. It is the same thing as the **Weather Forecast** and **Forecast Style** options in **Display Settings**, so you can still use those as well. It does nothing when the server has the weather forecast turned off for you.
+- **Engine.** Starts or stops the engine of whatever you happen to be sitting in, as long as you are the driver. It does nothing without the **Toggle Engine On/Off** permission, and there is no controller button for it.
+- **Vehicle spawner keys.** These two only do something while a vehicle spawner or saved vehicles menu is open, and only on a keyboard. `Delete` flips **Spawn Inside** between putting you in the car you just spawned and leaving you next to it. `End` flips **Replace Previous** between deleting the car you had and keeping it around, and it does nothing without the **Keep Previous Vehicle** permission. Both are the same switches as the checkboxes in the vehicle spawner menu, and what the keys are set to shows along the bottom of the screen.

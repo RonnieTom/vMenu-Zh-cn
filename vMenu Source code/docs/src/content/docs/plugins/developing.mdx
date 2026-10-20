@@ -1,0 +1,256 @@
+---
+title: "Making a plugin"
+description: "How to write a vMenu Enhanced plugin in C#, Lua, JavaScript or TypeScript: the menu API, permissions, settings and the rules to keep to."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+A plugin is a normal FiveM resource of your own that asks vMenu to draw a menu on its behalf. You can write one in C#, Lua, JavaScript or TypeScript. All four get the same API, and every code sample in these pages is shown in all four. Pick your language once and every sample follows.
+
+:::tip[Start from an example]
+[vMenu.ExamplePlugin](https://github.com/TomGrobbe/vMenu.ExamplePlugin) is a complete working plugin that uses every kind of row once, written in all four languages. Copy from it.
+
+[vMenu.RoutingBucketsPlugin](https://github.com/TomGrobbe/vMenu.RoutingBucketsPlugin) is a more advanced C# plugin. It includes server and client side code, both sides talking to each other, server side permission checks on everything, live state pushed out to the menu (live menu updates), rows in [Online Players](/vmenu/enhanced/plugins/menus/#player-actions), and a saved config file of its own.
+
+For theme related plugins, see [vMenu.ThemePicker](https://github.com/TomGrobbe/vMenu.ThemePicker),
+and [vMenu.CustomThemesPlugin](https://github.com/TomGrobbe/vMenu.CustomThemesPlugin), and read [registering themes](/vmenu/enhanced/plugins/themes/#adding-themes-of-your-own) to see how you can make your own themes for your server.
+
+All of them are listed on the [plugins page](/vmenu/enhanced/plugins/).
+:::
+
+:::caution[Read the license section]
+Plugins must be open source, under GPL-3.0 or AGPL-3.0. See [License](#license) at the bottom.
+:::
+
+## How it fits together
+
+Your resource has two halves, and both talk to vMenu over events. Neither side references vMenu's code.
+
+The **client** half describes the menu: rows, translations, and which rows are hidden or locked. The **server** half declares the permissions and settings the server owner controls. Use the same names on both sides and vMenu does all the checking for you.
+
+| Language   | Plugin API                                                     | Setup                                                 |
+| ---------- | -------------------------------------------------------------- | ----------------------------------------------------- |
+| C#         | NuGet `vMenu.Enhanced.ClientAPI` and `vMenu.Enhanced.ServerAPI` | [C# setup](/vmenu/enhanced/plugins/csharp/)           |
+| Lua        | `vmenu.lua`, from the `plugin-api` folder of the vMenu zip     | [Lua setup](/vmenu/enhanced/plugins/lua/)             |
+| JavaScript | `vmenu.js`, from the `plugin-api` folder of the vMenu zip      | [JavaScript setup](/vmenu/enhanced/plugins/javascript/) |
+| TypeScript | npm `@vespura/vmenu-plugin`                                    | [TypeScript setup](/vmenu/enhanced/plugins/typescript/) |
+
+Every form of the API carries the same version number as the vMenu Enhanced release it belongs to. Use the one matching the vMenu your server runs. Your plugin ships its own copy, so it never depends on vMenu's files at runtime.
+
+### Names in each language
+
+The text on this page uses the C# names. The other languages follow their own conventions:
+
+| C#                         | Lua                                       | JavaScript and TypeScript          |
+| -------------------------- | ----------------------------------------- | ---------------------------------- |
+| `row.Description = x`      | `row:SetDescription(x)`                   | `row.description = x`              |
+| `row.Checked` (read)       | `row:GetChecked()`                        | `row.checked`                      |
+| `row.Selected += handler`  | `row:OnSelected(handler)`                 | `row.onSelected(handler)`          |
+| `menu.AddList(text, options, selectedIndex: 1)` | `menu:AddList(text, options, { SelectedIndex = 2 })` | `menu.addList(text, options, { selectedIndex: 1 })` |
+| `await plugin.ConnectAsync()` | `plugin:Connect()` inside a thread     | `await plugin.connect()`           |
+| `PluginGate.Permission("A") & PluginGate.Setting(s)` | `vMenu.Gate.Permission('A') & vMenu.Gate.Setting(s)` | `Gate.permission('A').and(Gate.setting(s))` |
+
+Lua counts list positions from 1, like every Lua table. The other three count from 0. Optional arguments are an options table in Lua and an options object in JavaScript, and properties set there ride along with the row when it is added. Event subscriptions in Lua, JavaScript and TypeScript return a function that unsubscribes again.
+
+## The smallest plugin that works
+
+<Tabs syncKey="lang">
+<TabItem label="C#">
+
+Client:
+
+```csharp
+using CitizenFX.FiveM.Client;
+using CitizenFX.FiveM.Shared.Script;
+using vMenu.Enhanced.ClientAPI;
+
+public sealed class Main : IScript
+{
+    public async void Initialize()
+    {
+        var plugin = VMenuPlugin.Create("My Plugin");
+
+        var greet = plugin.RootMenu.AddButton("Say hello");
+        greet.Description = "Shows a notification, to prove this thing works.";
+        greet.Selected += () => plugin.Notify(NotifyStyle.Success, "Hello!");
+
+        var enabled = plugin.Settings.Bool("Enabled", true, "Turns my plugin on or off.");
+        greet.Gate = PluginGate.Permission("Greet") & PluginGate.Setting(enabled);
+        greet.HideWhenLocked = true;
+
+        var result = await plugin.ConnectAsync();
+        API.Log.Info($"[My Plugin] Registered with vMenu: {result.Accepted}.");
+    }
+}
+```
+
+Server:
+
+```csharp
+using CitizenFX.FiveM.Server;
+using CitizenFX.FiveM.Shared.Script;
+using vMenu.Enhanced.ServerAPI;
+
+public sealed class Main : IScript
+{
+    public async void Initialize()
+    {
+        var declaration = new ServerPluginDeclaration("My Plugin")
+            .AddPermission("Greet", "Lets someone use the greet button.")
+            .AddBoolSetting("Enabled", true, "Turns my plugin on or off.");
+
+        var result = await VMenuServer.RegisterAsync(declaration);
+        API.Log.Info($"[My Plugin] Registered with vMenu: {result.Accepted}.");
+    }
+}
+```
+
+</TabItem>
+<TabItem label="Lua">
+
+Client:
+
+```lua
+local plugin = vMenu.CreatePlugin('My Plugin')
+
+local greet = plugin.RootMenu:AddButton('Say hello', {
+    Description = 'Shows a notification, to prove this thing works.',
+})
+
+greet:OnSelected(function()
+    plugin:Notify('success', 'Hello!')
+end)
+
+local enabled = plugin.Settings:Bool('Enabled', true, 'Turns my plugin on or off.')
+greet:SetGate(vMenu.Gate.Permission('Greet') & vMenu.Gate.Setting(enabled))
+greet:SetHideWhenLocked(true)
+
+CreateThread(function()
+    local result = plugin:Connect()
+    print(('[My Plugin] Registered with vMenu: %s.'):format(tostring(result.Accepted)))
+end)
+```
+
+Server:
+
+```lua
+local declaration = vMenu.ServerPluginDeclaration('My Plugin')
+    :AddPermission('Greet', 'Lets someone use the greet button.')
+    :AddBoolSetting('Enabled', true, 'Turns my plugin on or off.')
+
+CreateThread(function()
+    local result = vMenu.Server.Register(declaration)
+    print(('[My Plugin] Registered with vMenu: %s.'):format(tostring(result.Accepted)))
+end)
+```
+
+</TabItem>
+<TabItem label="JavaScript">
+
+Client:
+
+```js
+const { VMenuPlugin, Gate } = vMenu;
+
+const plugin = VMenuPlugin.create('My Plugin');
+
+const greet = plugin.rootMenu.addButton('Say hello', {
+  description: 'Shows a notification, to prove this thing works.',
+});
+
+greet.onSelected(() => plugin.notify('success', 'Hello!'));
+
+const enabled = plugin.settings.bool('Enabled', true, 'Turns my plugin on or off.');
+greet.gate = Gate.permission('Greet').and(Gate.setting(enabled));
+greet.hideWhenLocked = true;
+
+plugin.connect().then((result) => console.log(`[My Plugin] Registered with vMenu: ${result.accepted}.`));
+```
+
+Server:
+
+```js
+const { VMenuServer, ServerPluginDeclaration } = vMenu;
+
+const declaration = new ServerPluginDeclaration('My Plugin')
+  .addPermission('Greet', 'Lets someone use the greet button.')
+  .addBoolSetting('Enabled', true, 'Turns my plugin on or off.');
+
+VMenuServer.register(declaration).then((result) => console.log(`[My Plugin] Registered with vMenu: ${result.accepted}.`));
+```
+
+</TabItem>
+<TabItem label="TypeScript">
+
+Client:
+
+```ts
+import { Gate, NotifyStyle, VMenuPlugin } from '@vespura/vmenu-plugin/client';
+
+const plugin = VMenuPlugin.create('My Plugin');
+
+const greet = plugin.rootMenu.addButton('Say hello', {
+  description: 'Shows a notification, to prove this thing works.',
+});
+
+greet.onSelected(() => plugin.notify(NotifyStyle.Success, 'Hello!'));
+
+const enabled = plugin.settings.bool('Enabled', true, 'Turns my plugin on or off.');
+greet.gate = Gate.permission('Greet').and(Gate.setting(enabled));
+greet.hideWhenLocked = true;
+
+plugin.connect().then((result) => console.log(`[My Plugin] Registered with vMenu: ${result.accepted}.`));
+```
+
+Server:
+
+```ts
+import { ServerPluginDeclaration, VMenuServer } from '@vespura/vmenu-plugin/server';
+
+const declaration = new ServerPluginDeclaration('My Plugin')
+  .addPermission('Greet', 'Lets someone use the greet button.')
+  .addBoolSetting('Enabled', true, 'Turns my plugin on or off.');
+
+VMenuServer.register(declaration).then((result) => console.log(`[My Plugin] Registered with vMenu: ${result.accepted}.`));
+```
+
+</TabItem>
+</Tabs>
+
+The gate is the point of declaring the permission and the setting. Without it the button is always there for everybody and the owner's config file does nothing. With it, the button only works for a player who has `Greet` while `Enabled` is on, and it follows along by itself when either changes. Read a value directly when you want the value rather than a gate: `enabled.Value` in C#, `enabled:GetValue()` in Lua, `enabled.value` in JavaScript and TypeScript.
+
+Connecting and registering never fail with an error. A refusal comes back with `Accepted` false and a reason in `Errors`, and anything vMenu accepted but was unhappy about is in `Warnings`. Both are logged for you too.
+
+## Start order and reconnecting
+
+Your plugin can start before or after vMenu and registers either way. If vMenu restarts, the plugin API registers everything you declared again. If your plugin restarts, vMenu drops your menus while you are gone and rebuilds them when you return. `IsConnected` tells you where you stand, and the `Disconnected` and `RegistrationAnswered` events fire on the way through.
+
+## Where to go next
+
+| Page | What it covers |
+| --- | --- |
+| [Menus](/vmenu/enhanced/plugins/menus/) | Every kind of row, changing a menu while it is live, keys, and actions in Online Players. |
+| [Standalone menus](/vmenu/enhanced/plugins/standalone-menus/) | Menus of your own at the top level, open priorities and menus that must stay open. |
+| [Text and messages](/vmenu/enhanced/plugins/text/) | Translations, notifications and asking the player for text. |
+| [Permissions and settings](/vmenu/enhanced/plugins/permissions/) | Gating rows, convar settings, refreshing permissions and logging. |
+| [Themes](/vmenu/enhanced/plugins/themes/) | Changing the look of vMenu for a player, and adding themes of your own. |
+
+## Rules to keep to
+
+- **Your resource name is your identity.** Permissions, settings and both template files are named after it. Two resources whose names sanitize to the same identity cannot both register, the second is refused.
+- **Limits.** A menu tree may hold 2000 items and nest 8 levels deep. Rows added after connecting count towards the same 2000. Past that, rows are skipped with a warning. A plugin may declare 25 keys across all its menus, and 50 standalone menus.
+- **Never trust the client.** The client half decides what a menu looks like, nothing more. Anything that changes the world belongs behind a server side permission check.
+- **vMenu owns the menu.** You describe what you want, vMenu decides how and when it is drawn. That is what keeps your plugin working across vMenu updates.
+- **Update with vMenu.** A breaking change on vMenu's side can stop an old plugin from loading.
+
+## License
+
+vMenu and every form of the plugin API are **GPL-3.0-or-later**. A plugin built on them is a work based on vMenu, so you cannot put a closed license on the result. **Your plugin must be licensed GPL-3.0 (or later) or AGPL-3.0 (or later).** The GPL explicitly allows being combined with the AGPL, and the AGPL keeps your code open just as well.
+
+A permissive license such as MIT or Apache is not enough on its own. Those let anyone take the code and close it again, which is exactly what vMenu's license is there to prevent.
+
+- **Running it only on your own servers asks nothing of you.** Using software is not distributing it, so your source may stay private.
+- **Handing it to anybody else means handing them the source too.** Giving it away, selling it, listing it on a store, or sending it to someone running another server are all distribution.
+- **You may charge money for it.** What you may not do is keep the source to yourself, and whoever paid you is then free to pass both on.
+
+This is a plain language summary, not legal advice. The [license text](https://github.com/TomGrobbe/vMenu/blob/main/LICENSE.md) is what counts.

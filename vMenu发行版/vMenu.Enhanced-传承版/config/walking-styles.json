@@ -1,0 +1,49 @@
+// The ways of walking players can pick from, under Player, Player Appearance, Walking Style.
+//
+// The name on the left is the clip set the game loads. The text on the right is what players see on
+// the row, so write it however you like.
+//
+// You can add your own. Anything on this list is passed straight to the game, so a clip set your
+// server streams itself works exactly like one that ships with GTA.
+//
+// A word of warning about which peds these suit. A clip set is animation, and animation is made for
+// one shape of skeleton. The move_m@ ones were made for men, the move_f@ ones for women, and none of
+// them were made for a dog. vMenu will let a player try any of them on any ped, and if the game has
+// nothing to load it says so rather than pretending it worked. So feel free to offer everything and
+// let people find out what looks right.
+//
+// Players always get a "Normal" choice on top of this list, which puts back the walk their ped came
+// with. You do not need to add it yourself.
+{
+  // Men
+  "move_m@casual@a": "休闲",
+  "move_m@business@a": "商务",
+  "move_m@tough_guy@": "硬汉",
+  "move_m@gangster@a": "黑帮",
+  "move_m@posh@": "优雅",
+  "move_m@hipster@a": "潮人",
+  "move_m@brave": "勇敢",
+  "move_m@sad@a": "悲伤",
+  "move_m@drunk@a": "微醉",
+  "move_m@drunk@verydrunk": "烂醉",
+  "move_m@injured": "受伤",
+  "move_m@hurry@a": "匆忙",
+  "move_m@money": "阔绰",
+
+  // Women
+  "move_f@casual@a": "休闲（女）",
+  "move_f@business@a": "商务（女）",
+  "move_f@sexy@a": "泼辣",
+  "move_f@femme@": "柔美",
+  "move_f@gangster@ng": "黑帮（女）",
+  "move_f@posh@": "优雅（女）",
+  "move_f@sad@a": "悲伤（女）",
+  "move_f@drunk@a": "微醉（女）",
+  "move_f@injured": "受伤（女）",
+  "move_f@maneater@": "交际花",
+
+  // Anyone
+  "move_ped_crouched": "蹲姿",
+  "move_heels@": "高跟鞋",
+  "move_lester_caneup": "拄拐杖"
+}

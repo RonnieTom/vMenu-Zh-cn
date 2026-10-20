@@ -1,0 +1,85 @@
+name: Deploy Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs.yml"
+  # Manual run from the Actions tab (no commit needed)
+  workflow_dispatch:
+
+# Only needs to read this repo; the push to the hub site uses HUB_DEPLOY_TOKEN.
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-deploy
+  cancel-in-progress: true
+
+env:
+  # Hub repo that owns the docs domain and serves it as lowercase subfolders.
+  HUB_REPO: TomGrobbe/TomGrobbe.github.io
+  HUB_BRANCH: main
+  # This branch owns the /vmenu/enhanced/ docs and the /vmenu/ landing page.
+  # /vmenu/legacy/ holds the original vMenu's docs, which the frozen legacy
+  # branch published once and nothing touches anymore.
+  HUB_ROOT: vmenu
+  HUB_SUBDIR: vmenu/enhanced
+
+jobs:
+  deploy:
+    name: Build & publish docs
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs
+    steps:
+      - name: Checkout vMenu
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      # Publish into the hub repo. Astro emits a flat dist/ with the
+      # /vmenu/enhanced base baked into URLs, so it maps 1:1 onto the
+      # hub's /vmenu/enhanced/ folder.
+      - name: Publish to hub site
+        env:
+          HUB_TOKEN: ${{ secrets.HUB_DEPLOY_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HUB_TOKEN}" ]; then
+            echo "::error::HUB_DEPLOY_TOKEN secret is not set. See docs/README.md for setup."
+            exit 1
+          fi
+          git clone --depth 1 --branch "${HUB_BRANCH}" \
+            "https://x-access-token:${HUB_TOKEN}@github.com/${HUB_REPO}.git" hub
+          # Replace the /vmenu/enhanced/ subfolder and the /vmenu/ landing page,
+          # and leave hub/vmenu/legacy/ and any other product folder untouched.
+          rm -rf "hub/${HUB_SUBDIR}"
+          mkdir -p "hub/${HUB_SUBDIR}"
+          cp -r dist/. "hub/${HUB_SUBDIR}/"
+          cp landing/index.html "hub/${HUB_ROOT}/index.html"
+          # Disable Jekyll so Astro's _astro/ asset folder is served (not skipped).
+          touch hub/.nojekyll
+          cd hub
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No documentation changes to publish."
+          else
+            git commit -m "Deploy vMenu docs"
+            git push origin "${HUB_BRANCH}"
+          fi

@@ -1,0 +1,100 @@
+using System.Text;
+
+namespace vMenu.Enhanced.Data;
+
+public static class ExampleFile
+{
+    public const string Extension = ".example";
+
+    public const string ConfigDirectory = "config";
+
+    // Every plugin's templates live here, each named after the resource it came from. One shipped folder
+    // rather than a folder per plugin: SaveResourceFile writes files and never folders, and no native
+    // makes one, so a folder named after a plugin could never be created.
+    public const string PluginsDirectory = ConfigDirectory + "/plugins";
+
+    // What a plugin's copy of one of these templates should be called.
+    public static string PluginCopyName(string resource, string copyName) => resource + "." + copyName;
+
+    private const string Rule = "###############################################################################";
+
+    public static string Banner(string copyName, params string[] extraNotes) =>
+        BannerIn(ConfigDirectory, copyName, extraNotes);
+
+    // The same banner, for a file that does not sit directly in the config directory.
+    public static string BannerIn(string directory, string copyName, params string[] extraNotes)
+    {
+        var banner = new StringBuilder();
+
+        banner.Append(Rule).Append('\n');
+        banner.Append("#  THIS FILE IS REGENERATED EVERY TIME vMenu Enhanced STARTS.\n");
+        banner.Append("#  ANY CHANGES YOU MAKE TO IT WILL BE LOST.\n");
+        banner.Append("#\n");
+        banner.Append("#  To use it:\n");
+        // Concatenated rather than interpolated: the FiveM sandbox refuses StringBuilder's interpolated
+        // string handler, so an interpolated argument here fails to load the assembly.
+        banner.Append("#    1. Copy this file and name the copy '" + copyName + "'.\n");
+        banner.Append("#    2. Edit that copy, never this one.\n");
+        banner.Append("#    3. Exec it from your server.cfg ABOVE the line that starts vMenu:\n");
+        banner.Append("#\n");
+        banner.Append("#         exec @vMenu.Enhanced/" + directory + "/" + copyName + "\n");
+        banner.Append("#         ensure vMenu.Enhanced\n");
+
+        foreach (var note in extraNotes)
+        {
+            banner.Append("#\n").Append(Comment(note, "# "));
+        }
+
+        banner.Append(Rule).Append('\n');
+
+        return banner.ToString();
+    }
+
+    // For a copy handed out ready to use, which vMenu never writes to.
+    public static string ReadyBanner(string copyName, params string[] extraNotes)
+    {
+        var banner = new StringBuilder();
+
+        banner.Append(Rule).Append('\n');
+        banner.Append("#  THIS FILE IS YOURS TO EDIT. vMenu Enhanced NEVER CHANGES IT.\n");
+        banner.Append("#\n");
+        banner.Append("#  It starts out with vMenu's defaults. Every time vMenu starts, it also\n");
+        banner.Append("#  writes '" + copyName + Extension + "' next to this file, listing\n");
+        banner.Append("#  everything that version of vMenu knows about. After an update, compare\n");
+        banner.Append("#  the two to find anything new.\n");
+        banner.Append("#\n");
+        banner.Append("#  Your server.cfg has to exec this file ABOVE the line that starts vMenu:\n");
+        banner.Append("#\n");
+        banner.Append("#         exec @vMenu.Enhanced/" + ConfigDirectory + "/" + copyName + "\n");
+        banner.Append("#         ensure vMenu.Enhanced\n");
+
+        foreach (var note in extraNotes)
+        {
+            banner.Append("#\n").Append(Comment(note, "# "));
+        }
+
+        banner.Append(Rule).Append('\n');
+
+        return banner.ToString();
+    }
+
+    // Wraps prose into # comment lines.
+    public static string Comment(string text, string prefix = "#", int width = 78)
+    {
+        var comment = new StringBuilder();
+        var line = new StringBuilder(prefix);
+
+        foreach (var word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (line.Length + 1 + word.Length > width && line.Length > prefix.Length)
+            {
+                comment.Append(line).Append('\n');
+                line.Clear().Append(prefix);
+            }
+
+            line.Append(' ').Append(word);
+        }
+
+        return comment.Append(line).Append('\n').ToString();
+    }
+}
