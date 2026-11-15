@@ -10,10 +10,10 @@ internal static class RadioStationsSection
     {
         menu.AddRange(Rows(menu));
 
-        menu.OnOpened = _ => SectionRows.Fill(menu, Rows(menu));
+        menu.OnOpened = _ => menu.ReplaceEntries(Rows(menu));
     }
 
-    private static IReadOnlyList<MenuEntry> Rows(MenuBuilder menu)
+    private static List<MenuEntry> Rows(MenuBuilder menu)
     {
         var stations = VehicleRadio.All();
 
@@ -24,15 +24,13 @@ internal static class RadioStationsSection
 
         var rows = new List<MenuEntry>(stations.Count + 1)
         {
-            new ButtonEntry
+            new ButtonEntry(Loc.VehicleOptions.RadioUnblockAll)
             {
-                Text = MenuText.Key(Loc.VehicleOptions.RadioUnblockAll),
-                Description = MenuText.Key(Loc.VehicleOptions.RadioUnblockAllDescription),
                 OnSelected = _ =>
                 {
                     VehicleRadio.ClearBlocked();
 
-                    SectionRows.Fill(menu, Rows(menu));
+                    menu.ReplaceEntries(Rows(menu));
                 },
             },
         };

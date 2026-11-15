@@ -21,7 +21,7 @@ internal static class PlateSection
         SectionRows.AutoFill(menu, () => Rows(menu));
     }
 
-    private static IReadOnlyList<MenuEntry> Rows(MenuBuilder menu)
+    private static List<MenuEntry> Rows(MenuBuilder menu)
     {
         if (SectionRows.Driven() is null)
         {
@@ -30,11 +30,8 @@ internal static class PlateSection
 
         return
         [
-            new ButtonEntry
+            new ButtonEntry(Loc.VehicleOptions.PlateText)
             {
-                Text = MenuText.Key(Loc.VehicleOptions.PlateText),
-                Description = MenuText.Key(Loc.VehicleOptions.PlateTextDescription),
-
                 // The plate itself on the right, so the row shows what it currently says without opening anything.
                 Label = MenuText.From(() => SectionRows.Driven() is { } current
                     ? API.GetVehicleNumberPlateText(current) ?? string.Empty
@@ -42,11 +39,8 @@ internal static class PlateSection
 
                 OnSelectedAsync = _ => ChangeTextAsync(menu),
             },
-            new ListEntry
+            new ListEntry(Loc.VehicleOptions.PlateStyle, VehicleOptionTables.PlateStyles)
             {
-                Text = MenuText.Key(Loc.VehicleOptions.PlateStyle),
-                Description = MenuText.Key(Loc.VehicleOptions.PlateStyleDescription),
-                Options = VehicleOptionTables.PlateStyles,
                 ReadSelectedIndex = () => SectionRows.Driven() is { } current
                     ? Math.Clamp(API.GetVehicleNumberPlateTextIndex(current), 0, VehicleOptionTables.PlateStyles.Count - 1)
                     : 0,
@@ -88,6 +82,6 @@ internal static class PlateSection
         API.SetVehicleNumberPlateText(target, typed);
 
         // The row carries the plate text as its label, and a label is only rewritten on a refresh.
-        SectionRows.Fill(menu, Rows(menu));
+        menu.ReplaceEntries(Rows(menu));
     }
 }

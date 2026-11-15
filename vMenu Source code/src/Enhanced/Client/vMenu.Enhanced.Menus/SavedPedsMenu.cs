@@ -46,41 +46,37 @@ public sealed class SavedPedsMenu : MenuDefinition
             MenuText.From(CategoryTitle),
             _ => { });
 
-        _pedMenu.Builder.OnOpened = _ => Fill(_pedMenu, PedRows());
+        _pedMenu.Builder.OnOpened = _ => _pedMenu.Builder.ReplaceEntries(PedRows());
 
         _detailMenu = menu.AddDetachedMenu(
             MenuText.From(() => _selected?.Ped.Name ?? string.Empty),
             MenuText.Key(Loc.SavedPeds.Title),
             _ => { });
 
-        _detailMenu.Builder.OnOpened = _ => Fill(_detailMenu, DetailRows());
+        _detailMenu.Builder.OnOpened = _ => _detailMenu.Builder.ReplaceEntries(DetailRows());
 
         menu.AddRange(RootRows());
 
         // The store changes from inside this menu, so the rows are rebuilt whenever the player comes back up
         // to this level.
-        menu.OnOpened = _ => Refill(menu, RootRows());
+        menu.OnOpened = _ => menu.ReplaceEntries(RootRows());
     }
 
     #region Rows
 
-    private IReadOnlyList<MenuEntry> RootRows()
+    private List<MenuEntry> RootRows()
     {
         var categories = SavedPedStore.Categories();
 
         var rows = new List<MenuEntry>
         {
-            new ButtonEntry
+            new ButtonEntry(Loc.SavedPeds.SaveCurrent)
             {
-                Text = MenuText.Key(Loc.SavedPeds.SaveCurrent),
-                Description = MenuText.Key(Loc.SavedPeds.SaveCurrentDescription),
                 Gate = SavedPedsPermissions.Save,
                 OnSelectedAsync = _ => SaveCurrentAsync(),
             },
-            new ButtonEntry
+            new ButtonEntry(Loc.SavedPeds.CreateCategory)
             {
-                Text = MenuText.Key(Loc.SavedPeds.CreateCategory),
-                Description = MenuText.Key(Loc.SavedPeds.CreateCategoryDescription),
                 Gate = SavedPedsPermissions.Manage,
                 OnSelectedAsync = _ => CreateCategoryAsync(),
             },
@@ -98,11 +94,7 @@ public sealed class SavedPedsMenu : MenuDefinition
 
         if (groups.Count == 0)
         {
-            rows.Add(new ButtonEntry
-            {
-                Text = MenuText.Key(Loc.SavedPeds.NoPeds),
-                Description = MenuText.Key(Loc.SavedPeds.NoPedsDescription),
-            });
+            rows.Add(new ButtonEntry(Loc.SavedPeds.NoPeds));
 
             return rows;
         }
@@ -154,11 +146,8 @@ public sealed class SavedPedsMenu : MenuDefinition
             options.Add(MenuText.Literal(category.Name));
         }
 
-        return new ListEntry
+        return new ListEntry(Loc.SavedPeds.EditCategory, options)
         {
-            Text = MenuText.Key(Loc.SavedPeds.EditCategory),
-            Description = MenuText.Key(Loc.SavedPeds.EditCategoryDescription),
-            Options = options,
             Gate = SavedPedsPermissions.Manage,
             OnSelectedAsync = selected => EditCategoryAsync(categories, selected.SelectedIndex),
         };
@@ -175,14 +164,11 @@ public sealed class SavedPedsMenu : MenuDefinition
 
         var picked = 0;
 
-        return new ConfirmListEntry
+        return new ConfirmListEntry(Loc.SavedPeds.DeleteCategory, options)
         {
-            Text = MenuText.Key(Loc.SavedPeds.DeleteCategory),
-            Description = MenuText.Key(Loc.SavedPeds.DeleteCategoryDescription),
             ConfirmationDescription = MenuText.Key(
                 Loc.SavedPeds.DeleteCategoryConfirm,
                 ("name", MenuText.From(() => NameAt(categories, picked)))),
-            Options = options,
             Gate = SavedPedsPermissions.Manage,
             OnIndexChanged = changed => picked = changed.NewIndex,
             OnConfirmed = confirmed =>
@@ -203,7 +189,7 @@ public sealed class SavedPedsMenu : MenuDefinition
         };
     }
 
-    private IReadOnlyList<MenuEntry> PedRows()
+    private List<MenuEntry> PedRows()
     {
         var rows = new List<MenuEntry>();
 
@@ -219,11 +205,7 @@ public sealed class SavedPedsMenu : MenuDefinition
 
         if (rows.Count == 0)
         {
-            rows.Add(new ButtonEntry
-            {
-                Text = MenuText.Key(Loc.SavedPeds.NoPeds),
-                Description = MenuText.Key(Loc.SavedPeds.NoPedsDescription),
-            });
+            rows.Add(new ButtonEntry(Loc.SavedPeds.NoPeds));
         }
 
         return rows;
@@ -282,17 +264,13 @@ public sealed class SavedPedsMenu : MenuDefinition
             : Localizer.Current.Get(Loc.SavedPeds.UnnamedModel);
     });
 
-    private IReadOnlyList<MenuEntry> DetailRows()
+    private List<MenuEntry> DetailRows()
     {
         if (_selected is not { } entry)
         {
             return
             [
-                new ButtonEntry
-                {
-                    Text = MenuText.Key(Loc.SavedPeds.NoPeds),
-                    Description = MenuText.Key(Loc.SavedPeds.NoPedsDescription),
-                },
+                new ButtonEntry(Loc.SavedPeds.NoPeds),
             ];
         }
 
@@ -300,19 +278,15 @@ public sealed class SavedPedsMenu : MenuDefinition
 
         var rows = new List<MenuEntry>
         {
-            new ButtonEntry
+            new ButtonEntry(Loc.SavedPeds.Spawn)
             {
-                Text = MenuText.Key(Loc.SavedPeds.Spawn),
-                Description = MenuText.Key(Loc.SavedPeds.SpawnDescription),
                 Gate = SavedPedsPermissions.Spawn,
                 OnSelectedAsync = _ => SpawnAsync(entry),
             },
             EditRow(entry),
             MoveRow(entry),
-            new ButtonEntry
+            new ButtonEntry(Loc.SavedPeds.Duplicate)
             {
-                Text = MenuText.Key(Loc.SavedPeds.Duplicate),
-                Description = MenuText.Key(Loc.SavedPeds.DuplicateDescription),
                 Gate = SavedPedsPermissions.Save,
                 OnSelectedAsync = _ => DuplicateAsync(entry),
             },
@@ -322,30 +296,24 @@ public sealed class SavedPedsMenu : MenuDefinition
         // in it, so the row becomes an offer to save alongside it instead.
         if (entry.IsFromNewerBuild)
         {
-            rows.Add(new ButtonEntry
+            rows.Add(new ButtonEntry(Loc.SavedPeds.SaveAsNew)
             {
-                Text = MenuText.Key(Loc.SavedPeds.SaveAsNew),
-                Description = MenuText.Key(Loc.SavedPeds.SaveAsNewDescription),
                 Gate = SavedPedsPermissions.Save,
                 OnSelectedAsync = _ => SaveCurrentAsync(),
             });
         }
         else
         {
-            rows.Add(new ConfirmButtonEntry
+            rows.Add(new ConfirmButtonEntry(Loc.SavedPeds.Replace)
             {
-                Text = MenuText.Key(Loc.SavedPeds.Replace),
-                Description = MenuText.Key(Loc.SavedPeds.ReplaceDescription),
                 ConfirmationDescription = MenuText.Key(Loc.SavedPeds.ReplaceConfirm, ("name", name)),
                 Gate = SavedPedsPermissions.Manage,
                 OnConfirmed = _ => Replace(entry),
             });
         }
 
-        rows.Add(new ConfirmButtonEntry
+        rows.Add(new ConfirmButtonEntry(Loc.SavedPeds.Delete)
         {
-            Text = MenuText.Key(Loc.SavedPeds.Delete),
-            Description = MenuText.Key(Loc.SavedPeds.DeleteDescription),
             ConfirmationDescription = MenuText.Key(Loc.SavedPeds.DeleteConfirm, ("name", name)),
             Gate = SavedPedsPermissions.Manage,
             OnConfirmed = _ => Delete(entry),
@@ -363,10 +331,8 @@ public sealed class SavedPedsMenu : MenuDefinition
             Description = MenuText.Key(Loc.SavedPeds.NewerBuildDescription),
             Gate = MenuGate.Never,
         }
-        : new ButtonEntry
+        : new ButtonEntry(Loc.SavedPeds.Edit)
         {
-            Text = MenuText.Key(Loc.SavedPeds.Edit),
-            Description = MenuText.Key(Loc.SavedPeds.EditDescription),
             Gate = SavedPedsPermissions.Manage,
             OnSelectedAsync = _ => EditAsync(entry),
         };
@@ -382,11 +348,8 @@ public sealed class SavedPedsMenu : MenuDefinition
             options.Add(group.Length == 0 ? MenuText.Key(Loc.SavedPeds.Uncategorised) : MenuText.Literal(group));
         }
 
-        return new ListEntry
+        return new ListEntry(Loc.SavedPeds.MoveToCategory, options)
         {
-            Text = MenuText.Key(Loc.SavedPeds.MoveToCategory),
-            Description = MenuText.Key(Loc.SavedPeds.MoveToCategoryDescription),
-            Options = options,
             Gate = SavedPedsPermissions.Manage,
             ReadSelectedIndex = () => Math.Max(0, IndexOf(groups, GroupOf(entry))),
 
@@ -743,38 +706,9 @@ public sealed class SavedPedsMenu : MenuDefinition
 
     private void RebuildEverything()
     {
-        if (_root is { } root)
-        {
-            Refill(root, RootRows());
-        }
-
-        Fill(_pedMenu, PedRows());
-        Fill(_detailMenu, DetailRows());
-    }
-
-    private static void Fill(DetachedMenu? menu, IReadOnlyList<MenuEntry> rows)
-    {
-        if (menu is not { } detached)
-        {
-            return;
-        }
-
-        Refill(detached.Builder, rows);
-    }
-
-    // Rebuilding drops every item and MenuAPI puts the highlight back on the first one, which moves the
-    // player's selection out from under them.
-    private static void Refill(MenuBuilder builder, IReadOnlyList<MenuEntry> rows)
-    {
-        var was = builder.Menu.CurrentIndex;
-        var offset = builder.Menu.ViewIndexOffset;
-
-        builder.ClearEntries();
-        builder.AddRange(rows);
-
-        var keep = was < builder.Menu.GetMenuItems().Count;
-
-        builder.Menu.RefreshIndex(keep ? was : 0, keep ? offset : 0);
+        _root?.ReplaceEntries(RootRows());
+        _pedMenu?.Builder.ReplaceEntries(PedRows());
+        _detailMenu?.Builder.ReplaceEntries(DetailRows());
     }
 
     private string CategoryTitle() =>

@@ -6,6 +6,7 @@ using CharacterCreatorPermissions = vMenu.Enhanced.Data.Permissions.Menus.Charac
 using PedModelsPermissions = vMenu.Enhanced.Data.Permissions.Menus.PedModels;
 using PlayerAppearancePermissions = vMenu.Enhanced.Data.Permissions.Menus.PlayerAppearance;
 using PlayerOptionsPermissions = vMenu.Enhanced.Data.Permissions.Menus.PlayerOptions;
+using SavedClothesPermissions = vMenu.Enhanced.Data.Permissions.Menus.SavedClothes;
 using SavedPedsPermissions = vMenu.Enhanced.Data.Permissions.Menus.SavedPeds;
 using WeaponLoadoutsPermissions = vMenu.Enhanced.Data.Permissions.Menus.WeaponLoadouts;
 using WeaponOptionsPermissions = vMenu.Enhanced.Data.Permissions.Menus.WeaponOptions;
@@ -25,6 +26,7 @@ public sealed class PlayerMenu : MenuDefinition
         | MenuGate.Permission(PlayerAppearancePermissions.Menu)
         | MenuGate.Permission(CharacterCreatorPermissions.Menu)
         | MenuGate.Permission(SavedPedsPermissions.Menu)
+        | MenuGate.Permission(SavedClothesPermissions.Menu)
         | MenuGate.Permission(WeaponOptionsPermissions.Menu)
         | MenuGate.Permission(WeaponLoadoutsPermissions.Menu)
         | MenuGate.Permission(WeaponOptionsPermissions.GameLoadouts)
@@ -38,6 +40,7 @@ public sealed class PlayerMenu : MenuDefinition
         menu.Entries.Add(SubmenuEntry.For(new PlayerAppearanceMenu()));
         menu.Entries.Add(SubmenuEntry.For(new CharacterCreatorMenu()));
         menu.Entries.Add(SubmenuEntry.For(new SavedPedsMenu()));
+        menu.Entries.Add(SubmenuEntry.For(new SavedClothesMenu()));
 
         menu.Entries.Add(SubmenuEntry.For(new WeaponOptionsMenu()));
         menu.Entries.Add(SubmenuEntry.For(new WeaponLoadoutsMenu()));

@@ -64,7 +64,7 @@ public static class UpdateChecker
 
         // Not behind the debug gate. It does something rather than report on state, and an owner who has
         // just been told an update exists needs it whether or not they are debugging.
-        SharedAPI.Commands.RegisterCommand(CheckCommand, true, new Action(CheckNow));
+        ServerCommands.Register(CheckCommand, CheckNow);
     }
 
     // "dev" rather than the stand-in version, so a request from an unreleased build is recognisable as
@@ -154,13 +154,12 @@ public static class UpdateChecker
 
             var userAgent = UserAgent();
 
-            var result = await GitHubSource.LatestAsync(channel, userAgent, TimeoutMs);
+            var result = await NugetSource.LatestAsync(channel, userAgent, TimeoutMs);
 
-            // nuget.org is asked both when github.com could not be read and when it read but had nothing,
-            // because every enhanced release starts life as a draft an unauthenticated caller cannot see.
+            // github.com is asked both when nuget.org could not be read and when it read but had nothing.
             if (!result.Reached || result.Update is null)
             {
-                var fallback = await NugetSource.LatestAsync(channel, userAgent, TimeoutMs);
+                var fallback = await GitHubSource.LatestAsync(channel, userAgent, TimeoutMs);
 
                 if (fallback.Reached)
                 {

@@ -137,14 +137,9 @@ public static class ParachuteOptions
         {
             var text = WeaponNames.Resolve(index < 8 ? $"PD_TINT{index}" : $"PSD_CAN_{index - 8}", string.Empty);
 
-            if (index < 8)
-            {
-                return text;
-            }
-
-            var broken = Localizer.Current.Get(Loc.WeaponOptions.StyleBrokenInFiveM);
-
-            return $"{text} ~r~{broken}";
+            return index < 8
+                ? text
+                : $"{text} ~r~This one does not work in FiveM.";
         });
 
     public static void SetPrimaryStyle(int index)

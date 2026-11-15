@@ -30,15 +30,22 @@ public static class PedAppearanceReader
 
     public static PedOutfit ReadOutfit(int ped) => new()
     {
-        Components = ReadComponents(ped),
+        Components = ReadComponents(ped, PedComponentSlots.All),
         Props = ReadProps(ped),
     };
 
-    private static List<PedComponentValue> ReadComponents(int ped)
+    // Clothing slots and props only — never head or hair, so face and hairstyle stay untouched.
+    public static PedOutfit ReadClothes(int ped) => new()
     {
-        var components = new List<PedComponentValue>(PedComponentSlots.All.Length);
+        Components = ReadComponents(ped, PedComponentSlots.Clothing),
+        Props = ReadProps(ped),
+    };
 
-        foreach (var slot in PedComponentSlots.All)
+    private static List<PedComponentValue> ReadComponents(int ped, int[] slots)
+    {
+        var components = new List<PedComponentValue>(slots.Length);
+
+        foreach (var slot in slots)
         {
             // A model that has nothing for this slot, such as most animals. Recording a value the model does not
             // have would make every restore report a difference it cannot fix.

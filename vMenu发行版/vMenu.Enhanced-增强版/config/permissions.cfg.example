@@ -272,6 +272,13 @@ add_ace group.admin "vMenu.Enhanced.Menus.All" allow
     add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedPeds.Save" allow
     add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedPeds.Spawn" allow
 
+  # Saved Clothes — clothing components + props only (no face/hair/tattoos)
+  add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedClothes.All" allow
+    add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedClothes.Manage" allow
+    add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedClothes.Menu" allow
+    add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedClothes.Save" allow
+    add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedClothes.Wear" allow
+
   add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedVehicles.All" allow
     add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedVehicles.Manage" allow
     add_ace builtin.everyone "vMenu.Enhanced.Menus.SavedVehicles.Menu" allow
@@ -408,6 +415,17 @@ add_ace group.admin "vMenu.Enhanced.Menus.All" allow
     add_ace group.admin "vMenu.Enhanced.Menus.WeatherOptions.WeatherCycle" allow
 
 add_ace builtin.everyone "vMenu.Enhanced.NoClip" allow
+
+add_ace group.admin "vMenu.Enhanced.Freecam" allow
+
+  add_ace group.admin "vMenu.Enhanced.Menus.Filmmaker.All" allow
+    add_ace group.admin "vMenu.Enhanced.Menus.Filmmaker.Menu" allow
+    add_ace group.admin "vMenu.Enhanced.Menus.Filmmaker.Shots" allow
+    add_ace group.admin "vMenu.Enhanced.Menus.Filmmaker.Paths" allow
+    add_ace group.admin "vMenu.Enhanced.Menus.Filmmaker.TargetLock" allow
+    add_ace group.admin "vMenu.Enhanced.Menus.Filmmaker.TargetPlayers" allow
+    add_ace group.admin "vMenu.Enhanced.Menus.Filmmaker.DepthOfField" allow
+    add_ace group.admin "vMenu.Enhanced.Menus.Filmmaker.Effects" allow
 
 add_ace group.admin "vMenu.Enhanced.Plugins.All" allow
 

@@ -5,6 +5,7 @@ using CitizenFX.FiveM.Server;
 using CitizenFX.FiveM.Server.Entities;
 using CitizenFX.FiveM.Shared.Serialization;
 
+using vMenu.Enhanced.Configuration.Server;
 using vMenu.Enhanced.Data.VehicleData;
 using vMenu.Enhanced.Logging;
 using vMenu.Enhanced.Serialization.Server;
@@ -40,11 +41,8 @@ public static class VehicleExtraActions
         Labels.Clear();
         _payload = "{}";
 
-        var contents = Native.LoadResourceFile(Native.GetCurrentResourceName(), ConfigFile);
-
-        if (string.IsNullOrWhiteSpace(contents))
+        if (ResourceFile.Read(ConfigFile, "Config", "vehicle extras keep their numbered names") is not { } contents)
         {
-            Log.Info($"[Config] No {ConfigFile} found, so vehicle extras keep their numbered names.");
             return;
         }
 
@@ -113,7 +111,7 @@ public static class VehicleExtraActions
 
         foreach (var extra in extras.EnumerateObject())
         {
-            if (!int.TryParse(extra.Name.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var id))
+            if (!ActionArgs.TryInt(extra.Name.Trim(), out var id))
             {
                 Log.Warning($"[Config] Skipping extra '{extra.Name}' on '{model}' in {ConfigFile}: the id has to be a whole number in quotes.");
                 continue;

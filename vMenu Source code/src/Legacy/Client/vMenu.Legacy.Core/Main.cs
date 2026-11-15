@@ -37,6 +37,7 @@ using vMenu.Enhanced.Serialization;
 using vMenu.Enhanced.Storage;
 using vMenu.Enhanced.Ticks;
 
+using AdminSettings = vMenu.Enhanced.Data.Configuration.Settings.Admin;
 using PersonalVehicleFeature = vMenu.Enhanced.Menus.Vehicles.Personal.PersonalVehicle;
 using StaffAlertsFeature = vMenu.Enhanced.Menus.Misc.StaffAlerts;
 
@@ -144,14 +145,23 @@ public sealed class Main : BaseScript
 
         ClientPermissions.PermissionsChanged += TickRegistry.Reevaluate;
 
+        StaffOnlyMode.Source(() => ClientConfig.Value(AdminSettings.StaffOnly));
+        ClientConfig.AddEventListenerFor([AdminSettings.StaffOnly], StaffOnlyMode.Refresh);
+        StaffOnlyMode.Changed += TickRegistry.Reevaluate;
+        StaffOnlyLock.Initialize();
+        TickOverlay.IsBlocked = () => StaffOnlyMode.Active;
+        StaffOnlyMode.Changed += TickOverlay.Restore;
+
         VehicleCommands.Initialize();
         VehicleDumpCommands.Initialize();
         PedDumpCommands.Initialize();
         CharacterDumpCommands.Initialize();
+        PropDiagnosticsCommand.Initialize();
         CharacterCamera.Initialize();
         PedHeadFit.Initialize();
         DeveloperOverlay.Initialize();
         NoClip.NoClip.Initialize();
+        Freecam.Freecam.Initialize();
 
         PvpMode.Initialize();
         NoClipSmoke.Initialize();
@@ -159,29 +169,30 @@ public sealed class Main : BaseScript
         PlayerGodMode.Initialize();
         PlayerSuperJump.Initialize();
         PlayerBeastMode.Initialize();
-        PlayerFastRun.Initialize();
-        PlayerFastSwim.Initialize();
+        PlayerFastRun.Toggle.Initialize();
+        PlayerFastSwim.Toggle.Initialize();
         MpStats.Initialize();
-        PlayerUnlimitedOxygen.Initialize();
+        PlayerUnlimitedOxygen.Toggle.Initialize();
         PlayerMoveSpeed.Initialize();
-        PlayerNoRagdoll.Initialize();
-        PlayerNoHelmet.Initialize();
-        PlayerInvisible.Initialize();
-        PlayerStayInVehicle.Initialize();
-        PlayerFreeze.Initialize();
-        EveryoneIgnoresPlayer.Initialize();
-        PlayerNeverWanted.Initialize();
+        PlayerNoRagdoll.Toggle.Initialize();
+        PlayerNoHelmet.Toggle.Initialize();
+        PlayerInvisible.Toggle.Initialize();
+        PlayerStayInVehicle.Toggle.Initialize();
+        PlayerFreeze.Toggle.Initialize();
+        EveryoneIgnoresPlayer.Toggle.Initialize();
+        PlayerNeverWanted.Toggle.Initialize();
         PlayerIntoxication.Initialize();
         PedIlluminatedClothing.Initialize();
         PedKeepProps.Initialize();
+        PedWalkingStyle.Initialize();
         VehicleGodMode.Initialize();
         VehicleKeepClean.Initialize();
         VehicleEngine.Initialize();
         VehiclePerformance.Initialize();
-        VehicleFreeze.Initialize();
+        VehicleFreeze.Toggle.Initialize();
         VehicleVisibility.Initialize();
         VehicleTurbulence.Initialize();
-        VehicleAnchor.Initialize();
+        VehicleAnchor.Toggle.Initialize();
         AircraftWeapons.Initialize();
         VehicleRadio.Initialize();
         PersonalVehicleFeature.Initialize();
@@ -194,14 +205,8 @@ public sealed class Main : BaseScript
         CharacterRespawn.Initialize();
         WeaponLoadoutRespawn.Initialize();
 
-        NoClip.NoClip.EntityReleased += _ =>
-        {
-            PlayerGodMode.Reapply();
-            VehicleGodMode.Reapply();
-            PlayerInvisible.Reapply();
-            EveryoneIgnoresPlayer.Reapply();
-            PlayerFreeze.Reapply();
-        };
+        NoClip.NoClip.EntityReleased += _ => ReapplyPlayerToggles();
+        Freecam.Freecam.EntityReleased += _ => ReapplyPlayerToggles();
 
         TeleportKeyBinding.Initialize();
         VisorKeyBinding.Initialize();
@@ -231,6 +236,7 @@ public sealed class Main : BaseScript
         JoinLeaveNotifications.Initialize();
 
         UpdateNotice.Initialize();
+        CommandReplies.Initialize();
 
         WorldSync.Initialize();
 
@@ -263,6 +269,15 @@ public sealed class Main : BaseScript
 
         await CharacterRespawn.ApplyOnJoinAsync();
         await WeaponLoadoutRespawn.RestoreOnJoinAsync();
+    }
+
+    private static void ReapplyPlayerToggles()
+    {
+        PlayerGodMode.Reapply();
+        VehicleGodMode.Reapply();
+        PlayerInvisible.Toggle.Apply();
+        EveryoneIgnoresPlayer.Toggle.Apply();
+        PlayerFreeze.Toggle.Apply();
     }
 
     private static void WriteLog(LogLevel level, string message) => Debug.WriteLine(level switch

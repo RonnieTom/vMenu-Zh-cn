@@ -47,6 +47,40 @@ public static class PedAppearanceWriter
         }
     }
 
+    // Clothes and props only. Never resets the whole ped, so face, hair and tattoos stay as they are.
+    public static void ApplyClothes(int ped, PedOutfit outfit)
+    {
+        NativeFixer.ClearAllPedProps(ped, false);
+
+        foreach (var component in outfit.Components)
+        {
+            if (!IsClothingSlot(component.Slot))
+            {
+                continue;
+            }
+
+            ApplyComponent(ped, component);
+        }
+
+        foreach (var prop in outfit.Props)
+        {
+            ApplyProp(ped, prop);
+        }
+    }
+
+    private static bool IsClothingSlot(int slot)
+    {
+        foreach (var clothing in PedComponentSlots.Clothing)
+        {
+            if (clothing == slot)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // Checked against the live counts rather than clamped into range. A drawable this model does not
     // have is a piece the player is missing, and quietly dressing them in a different one would hide
     // that from both the player and the diff.

@@ -1,6 +1,8 @@
 using CitizenFX.FiveM.Client;
 using CitizenFX.FiveM.Shared;
 
+using MenuAPI;
+
 using vMenu.Enhanced.Data.Permissions;
 using vMenu.Enhanced.Data.PlayerState;
 using vMenu.Enhanced.Data.Ticks;
@@ -46,18 +48,15 @@ public static class NoClip
 
     private const int NoclipAlpha = 51;
 
-    private const string InstructionalButtonsScaleform = "INSTRUCTIONAL_BUTTONS";
     private static bool NoclipActive { get; set; } = false;
     private static int MovingSpeed { get; set; } = 0;
     private static bool FollowCamMode { get; set; } = true;
 
-    private static int _instructionalButtonsScaleformId = -1;
-
-    private static bool _rebuildInstructionalButtons = true;
-
     public static event Action<int>? EntityReleased;
 
     public static bool IsActive => NoclipActive;
+
+    public static Func<bool> IsBlocked { get; set; } = static () => false;
 
     private static bool _lentByStaff;
 
@@ -71,7 +70,6 @@ public static class NoClip
     private static int _cachedEntity;
 
     private static TickHandle? _move;
-    private static TickHandle? _instructionalButtons;
 
     public static void Initialize()
     {
@@ -90,7 +88,7 @@ public static class NoClip
                 }
 
                 FollowCamMode = !FollowCamMode;
-                _rebuildInstructionalButtons = true;
+                BuildInstructionalButtons();
             }));
 
         _move = TickRegistry.Register(
@@ -101,124 +99,28 @@ public static class NoClip
             onStarted: BeginNoclip,
             onStopped: EndNoclip);
 
-        _instructionalButtons = TickRegistry.Register(
-            "NoClip.InstructionalButtons",
-            handler: InstructionalButtonsTick,
-            TickRate.PerFrame,
-            condition: () => NoclipActive);
 
         ClientPermissions.PermissionsChanged += OnPermissionsChanged;
     }
 
     #region Instructional buttons
-    private static async Task InstructionalButtonsTick()
-    {
-        if (Native.IsHudHidden())
-        {
-            return;
-        }
-
-        if (!Native.HasScaleformMovieLoaded(_instructionalButtonsScaleformId))
-        {
-            await PrepareInstructionalButtons();
-        }
-
-        if (_rebuildInstructionalButtons)
-        {
-            BuildInstructionalButtons();
-            _rebuildInstructionalButtons = false;
-        }
-
-        DisplayInstructionalButtons();
-    }
-
-    private static async Task PrepareInstructionalButtons()
-    {
-        if (_instructionalButtonsScaleformId != -1 && Native.HasScaleformMovieLoaded(_instructionalButtonsScaleformId))
-        {
-            return;
-        }
-
-        _instructionalButtonsScaleformId = Native.RequestScaleformMovie(InstructionalButtonsScaleform);
-
-        while (!Native.HasScaleformMovieLoaded(_instructionalButtonsScaleformId))
-        {
-            await API.Delay(0);
-        }
-
-        _rebuildInstructionalButtons = true;
-    }
-
-    private static void ReleaseInstructionalButtons()
-    {
-        if (_instructionalButtonsScaleformId == -1)
-        {
-            return;
-        }
-
-        Native.SetScaleformMovieAsNoLongerNeeded(ref _instructionalButtonsScaleformId);
-
-        _instructionalButtonsScaleformId = -1;
-        _rebuildInstructionalButtons = true;
-    }
-
-    private static readonly InstructionalButton[] InstructionalButtons =
-    [
-        new(() => $"调整速度（{MoveSpeeds[MovingSpeed].Label}x）", static () => $"{Native.GetControlInstructionalButton(0, NoClipKeyBindings.SpeedDownControl, true)}%b_998%{Native.GetControlInstructionalButton(0, NoClipKeyBindings.SpeedUpControl, true)}"),
-        new(() => "上升 / 下降", static () => $"{Native.GetControlInstructionalButton(0, NoClipKeyBindings.DownControl, true)}%b_998%{Native.GetControlInstructionalButton(0, NoClipKeyBindings.UpControl, true)}"),
-        new(() => "前进 / 后退", static () => $"{Native.GetControlInstructionalButton(0, NoClipKeyBindings.BackwardControl, true)}%b_998%{Native.GetControlInstructionalButton(0, NoClipKeyBindings.ForwardControl, true)}"),
-        new(() => FollowCamMode ? "跟随镜头：开" : "跟随镜头：关", static () => Native.GetControlInstructionalButton(0, NoClipKeyBindings.FollowCamControl, true))
-    ];
-
-    // Only shown when the entity is not following the camera.
-    private static readonly InstructionalButton[] TurnButtons = [
-        new (() => "左转 / 右转", static () => $"{Native.GetControlInstructionalButton(0, NoClipKeyBindings.TurnLeftControl, true)}%b_998%{Native.GetControlInstructionalButton(0, NoClipKeyBindings.TurnRightControl, true)}"),
-    ];
-
-    private static void DisplayInstructionalButtons()
-    {
-        if (_instructionalButtonsScaleformId == -1)
-        {
-            return;
-        }
-
-        Native.DrawScaleformMovieFullscreen(_instructionalButtonsScaleformId, 255, 255, 255, 255, 0);
-    }
+    private static readonly GlobalInstructionalButtons InstructionalButtons = new();
 
     private static void BuildInstructionalButtons()
     {
-        Native.CallScaleformMovieMethod(_instructionalButtonsScaleformId, "CLEAR_ALL");
+        InstructionalButtons.Clear();
 
-        Native.BeginScaleformMovieMethod(_instructionalButtonsScaleformId, "TOGGLE_MOUSE_BUTTONS");
-        Native.PushScaleformMovieFunctionParameterInt(0);
-        Native.EndScaleformMovieMethod();
+        InstructionalButtons
+            .Add(() => $"Change Speed ({MoveSpeeds[MovingSpeed].Label}x)", NoClipKeyBindings.SpeedUpControl, NoClipKeyBindings.SpeedDownControl)
+            .Add("Up / Down", NoClipKeyBindings.UpControl, NoClipKeyBindings.DownControl)
+            .Add("Forward / Backward", NoClipKeyBindings.ForwardControl, NoClipKeyBindings.BackwardControl)
+            .Add(() => FollowCamMode ? "Follow Cam: On" : "Follow Cam: Off", NoClipKeyBindings.FollowCamControl);
 
-        var i = 0;
-        foreach (var item in InstructionalButtons)
-        {
-            SetDataSlot(i, item);
-            i++;
-        }
-
+        // Only shown when the entity is not following the camera.
         if (!FollowCamMode)
         {
-            foreach (var item in TurnButtons)
-            {
-                SetDataSlot(i, item);
-                i++;
-            }
+            InstructionalButtons.Add("Turn Left / Right", NoClipKeyBindings.TurnLeftControl, NoClipKeyBindings.TurnRightControl);
         }
-
-        Native.CallScaleformMovieMethod(_instructionalButtonsScaleformId, "DRAW_INSTRUCTIONAL_BUTTONS");
-    }
-
-    private static void SetDataSlot(int slot, InstructionalButton button)
-    {
-        Native.BeginScaleformMovieMethod(_instructionalButtonsScaleformId, "SET_DATA_SLOT");
-        Native.ScaleformMovieMethodAddParamInt(slot);
-        Native.ScaleformMovieMethodAddParamTextureNameString(button.ButtonGetter());
-        Native.ScaleformMovieMethodAddParamTextureNameString(button.TextGetter());
-        Native.EndScaleformMovieMethod();
     }
     #endregion
 
@@ -286,7 +188,7 @@ public static class NoClip
             }
 
             MovingSpeed = (MovingSpeed + steps + MoveSpeeds.Length) % MoveSpeeds.Length;
-            _rebuildInstructionalButtons = true;
+            InstructionalButtons.Refresh();
         });
     }
 
@@ -301,7 +203,7 @@ public static class NoClip
     internal static void SetNoclipActive(bool active, bool byStaff = false)
     {
         // The key tick follows the permission, but a revoke can land between the two.
-        if (active && ((!byStaff && !IsAllowed) || SceneLock.IsActive))
+        if (active && ((!byStaff && !IsAllowed) || SceneLock.IsActive || IsBlocked()))
         {
             return;
         }
@@ -317,7 +219,6 @@ public static class NoClip
         API.EmitServer(PlayerStateEvents.ReportNoClip, active);
 
         _move?.Reevaluate();
-        _instructionalButtons?.Reevaluate();
     }
 
     private static void BeginNoclip()
@@ -325,6 +226,9 @@ public static class NoClip
         _noclipPed = Native.PlayerPedId();
         _noclipEntity = GetNoclipEntity(_noclipPed, out _);
         _cachedEntity = _noclipEntity;
+
+        BuildInstructionalButtons();
+        InstructionalButtons.Show();
     }
 
     private static void EndNoclip()
@@ -337,7 +241,7 @@ public static class NoClip
         }
 
         ResetEntity(_noclipPed, _noclipEntity);
-        ReleaseInstructionalButtons();
+        InstructionalButtons.Hide();
     }
 
     private static async Task NoClipFrame()

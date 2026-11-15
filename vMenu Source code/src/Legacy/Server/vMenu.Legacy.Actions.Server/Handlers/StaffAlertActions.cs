@@ -56,7 +56,7 @@ public static class StaffAlertActions
 
     private static ActionResponse Raise(Player source, string[] args)
     {
-        if (!ServerConfig.Value(StaffAlertSettings.Enabled))
+        if (!ServerConfig.Value(StaffAlertSettings.Enabled) || ServerPermissions.IsStaffOnlyFor(source))
         {
             return ActionResponse.Refused();
         }
@@ -273,7 +273,7 @@ public static class StaffAlertActions
             return picked;
         }
 
-        if (!int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id))
+        if (!ActionArgs.TryInt(token, out var id))
         {
             return null;
         }

@@ -1,36 +1,33 @@
-using System.Globalization;
-using System.Text;
-
 using System.Text.Json.Serialization;
 
 using CitizenFX.FiveM.Server;
 using CitizenFX.FiveM.Server.Entities;
 using CitizenFX.FiveM.Shared.Serialization;
 
+using vMenu.Enhanced.Configuration.Server;
 using vMenu.Enhanced.Data.Actions;
 using vMenu.Enhanced.Data.Teleport;
 using vMenu.Enhanced.Logging;
-using vMenu.Enhanced.Permissions.Server;
-using vMenu.Enhanced.Players.Server;
-using vMenu.Enhanced.Serialization.Server;
 
 using TeleportMenuPermissions = vMenu.Enhanced.Data.Permissions.Menus.TeleportMenu;
 
 namespace vMenu.Enhanced.Actions.Server.Handlers;
 
-// Clients are told rather than asked: they hold the list from the moment they have their permissions
-// and never fetch it again, so opening the menu costs nothing. Anything that changes the list here
-// goes back out to everybody, which is what keeps their copies from drifting.
 public static class TeleportActions
 {
     private const string ConfigFile = "config/teleport-categories.json";
 
-    private static readonly List<Category> Categories = [];
+    // Gated on the way out as well, so a player who may not use the categories never holds the list of them.
+    private static readonly SyncedConfigFile<List<Category>> Store = new(
+        ConfigFile,
+        "Teleport",
+        TeleportEvents.Set,
+        TeleportMenuPermissions.Category,
+        "nothing was added");
 
-    // The list as the clients receive it, rebuilt only when it changes.
-    private static volatile string _payload = "[]";
+    private static List<Category> Categories => Store.Value;
 
-    public static string Payload => _payload;
+    public static string Payload => Store.Payload;
 
     public static void Register()
     {
@@ -60,11 +57,11 @@ public static class TeleportActions
     }
 
     // A named method, not a lambda: the binder reads FromSourceAttribute off the delegate's MethodInfo.
-    private static void OnRequested([FromSource] Player source) => SendTo(source);
+    private static void OnRequested([FromSource] Player source) => Store.SendTo(source);
 
     private static ActionResponse AddCategory(Player source, string[] args)
     {
-        if (args.Length < 2 || Trimmed(args[0]) is not { } name)
+        if (args.Length < 2 || ActionArgs.Trimmed(args[0]) is not { } name)
         {
             return ActionResponse.InvalidRequest();
         }
@@ -83,12 +80,12 @@ public static class TeleportActions
 
         Categories.Add(added);
 
-        return Commit(source, $"added category '{name}'", () => Categories.Remove(added));
+        return Store.Commit(source, $"added category '{name}'", () => Categories.Remove(added));
     }
 
     private static ActionResponse AddLocation(Player source, string[] args)
     {
-        if (args.Length < 6 || Trimmed(args[1]) is not { } name)
+        if (args.Length < 6 || ActionArgs.Trimmed(args[1]) is not { } name)
         {
             return ActionResponse.InvalidRequest();
         }
@@ -98,19 +95,18 @@ public static class TeleportActions
             return ActionResponse.NotFound();
         }
 
-        if (!TryParse(args[3], out var x) || !TryParse(args[4], out var y) || !TryParse(args[5], out var z))
+        if (!ActionArgs.TryFloat(args[3], out var x)
+            || !ActionArgs.TryFloat(args[4], out var y)
+            || !ActionArgs.TryFloat(args[5], out var z))
         {
             return ActionResponse.InvalidRequest();
         }
 
         category.Locations ??= [];
 
-        foreach (var existing in category.Locations)
+        if (category.Locations.IndexOfName(name, location => location.Name) >= 0)
         {
-            if (string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase))
-            {
-                return ActionResponse.Refused();
-            }
+            return ActionResponse.Refused();
         }
 
         var added = new Location
@@ -121,12 +117,12 @@ public static class TeleportActions
 
             // Optional, so anything unreadable is left unset rather than refused: without one the player simply
             // keeps whichever way they are already facing.
-            Heading = args.Length > 6 && TryParse(args[6], out var heading) ? heading : null,
+            Heading = args.Length > 6 && ActionArgs.TryFloat(args[6], out var heading) ? heading : null,
         };
 
         category.Locations.Add(added);
 
-        return Commit(
+        return Store.Commit(
             source,
             $"added '{name}' to '{category.Name}'",
             () => category.Locations.Remove(added));
@@ -134,12 +130,12 @@ public static class TeleportActions
 
     private static ActionResponse RemoveCategory(Player source, string[] args)
     {
-        if (args.Length < 1 || Trimmed(args[0]) is not { } name)
+        if (args.Length < 1 || ActionArgs.Trimmed(args[0]) is not { } name)
         {
             return ActionResponse.InvalidRequest();
         }
 
-        var at = IndexOfCategory(name);
+        var at = Categories.IndexOfName(name, category => category.Name);
 
         if (at < 0)
         {
@@ -151,12 +147,12 @@ public static class TeleportActions
         Categories.RemoveAt(at);
 
         // Put back where it was rather than appended, so a failed write leaves the order alone too.
-        return Commit(source, $"removed category '{removed.Name}'", () => Categories.Insert(at, removed));
+        return Store.Commit(source, $"removed category '{removed.Name}'", () => Categories.Insert(at, removed));
     }
 
     private static ActionResponse RemoveLocation(Player source, string[] args)
     {
-        if (args.Length < 2 || Trimmed(args[1]) is not { } name)
+        if (args.Length < 2 || ActionArgs.Trimmed(args[1]) is not { } name)
         {
             return ActionResponse.InvalidRequest();
         }
@@ -166,7 +162,7 @@ public static class TeleportActions
             return ActionResponse.NotFound();
         }
 
-        var at = IndexOfLocation(locations, name);
+        var at = locations.IndexOfName(name, location => location.Name);
 
         if (at < 0)
         {
@@ -177,138 +173,30 @@ public static class TeleportActions
 
         locations.RemoveAt(at);
 
-        return Commit(
+        return Store.Commit(
             source,
             $"removed '{removed.Name}' from '{category.Name}'",
             () => locations.Insert(at, removed));
     }
 
-    // Writes the file, then republishes the list. Puts the change back if the write failed, so what the
-    // clients hold always matches what is on disk.
-    private static ActionResponse Commit(Player source, string what, Action undo)
-    {
-        if (!Write(ServerJson.SerializeIndented(Categories)))
-        {
-            undo();
-
-            return ActionResponse.Failed();
-        }
-
-        _payload = ServerJson.Serialize(Categories);
-
-        Broadcast();
-
-        Log.Debug($"[Teleport] {source} {what}.");
-
-        return ActionResponse.Ok();
-    }
-
-    private static bool Write(string json)
-    {
-        try
-        {
-            var bytes = Encoding.UTF8.GetBytes(json);
-
-            if (Native.SaveResourceFile(Native.GetCurrentResourceName(), ConfigFile, bytes))
-            {
-                return true;
-            }
-
-            Log.Error($"[Teleport] {ConfigFile} could not be written, so nothing was added.");
-        }
-        catch (Exception exception)
-        {
-            // Answered as a failed write rather than left to the dispatcher, so the caller still undoes what it
-            // added. A throw that escaped here would leave the list holding something that is not on disk.
-            Log.Error($"[Teleport] Writing {ConfigFile} threw, so nothing was added: {exception}");
-        }
-
-        return false;
-    }
-
-    private static void Broadcast()
-    {
-        foreach (var connected in ConnectedPlayers.All())
-        {
-            SendTo(new Player(connected.ServerId));
-        }
-    }
-
-    // Gated on the way out as well as on the way in: a player who may not use the categories has no
-    // business holding the list of them.
-    private static void SendTo(Player player)
-    {
-        if (ServerPermissions.IsPlayerAllowed(player, TeleportMenuPermissions.Category))
-        {
-            API.EmitClient(player.Handle, TeleportEvents.Set, _payload);
-        }
-    }
-
     private static Category? Find(string? name)
     {
-        var at = IndexOfCategory(name);
+        var at = Categories.IndexOfName(name, category => category.Name);
 
         return at >= 0 ? Categories[at] : null;
     }
-
-    private static int IndexOfCategory(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return -1;
-        }
-
-        for (var index = 0; index < Categories.Count; index++)
-        {
-            if (string.Equals(Categories[index].Name, name.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                return index;
-            }
-        }
-
-        return -1;
-    }
-
-    private static int IndexOfLocation(List<Location> locations, string name)
-    {
-        for (var index = 0; index < locations.Count; index++)
-        {
-            if (string.Equals(locations[index].Name, name, StringComparison.OrdinalIgnoreCase))
-            {
-                return index;
-            }
-        }
-
-        return -1;
-    }
-
-    private static string? Trimmed(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static bool TryParse(string value, out float parsed) =>
-        float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed);
 
     // Read once, dropping anything malformed. A missing or unreadable file just means the category menu
     // starts empty.
     private static void Load()
     {
-        var contents = Native.LoadResourceFile(Native.GetCurrentResourceName(), ConfigFile);
-
-        if (string.IsNullOrWhiteSpace(contents))
+        if (!ResourceFile.TryLoad<List<Category>>(
+            ConfigFile,
+            "Teleport",
+            "the category menu starts empty",
+            "a list of categories",
+            out var read))
         {
-            Log.Info($"[Teleport] No {ConfigFile} found, so the category menu starts empty.");
-            return;
-        }
-
-        if (!ServerJson.TryDeserialize<List<Category>>(contents, out var read, out var error))
-        {
-            Log.Error($"[Teleport] {ConfigFile} could not be parsed, so the category menu starts empty: {error}");
-            return;
-        }
-
-        if (read is null)
-        {
-            Log.Error($"[Teleport] {ConfigFile} has to hold a list of categories, so the category menu starts empty.");
             return;
         }
 
@@ -328,7 +216,7 @@ public static class TeleportActions
             Log.Debug($"[Teleport] Category '{category.Name}' holds {category.Locations.Count} location(s).");
         }
 
-        _payload = ServerJson.Serialize(Categories);
+        Store.Rebuild();
     }
 
     private static List<Location> Keep(List<Location>? locations, string category)

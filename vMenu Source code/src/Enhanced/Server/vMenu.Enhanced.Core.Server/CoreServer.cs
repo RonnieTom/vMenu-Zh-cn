@@ -53,6 +53,8 @@ public class CoreServer : IScript
         ServerPermissions.Initialize();
         ServerConfig.Initialize();
 
+        ServerPermissions.SourceStaffOnly(() => ServerConfig.Value(Admin.StaffOnly));
+
         // Linux TLS bridge
         NetBridge.Initialize();
 
@@ -62,7 +64,7 @@ public class CoreServer : IScript
         DebugCommands.Source(
             () => ServerConfig.Value(Debugging.Server),
             Debugging.Server.Name,
-            message => Log.Info($"[vMenu] {message}"));
+            message => Log.Warning($"[vMenu] {message}"));
 
         ServerTickRegistry.Initialize();
 
@@ -88,6 +90,7 @@ public class CoreServer : IScript
         WeaponComponentCatalog.Load();
 
         PermissionsSync.RegisterEventHandlers();
+        ServerConfig.AddEventListenerFor([Admin.StaffOnly], () => PermissionsSync.RefreshAll());
         PedCategories.RegisterEventHandlers();
         WeaponCatalog.RegisterEventHandlers();
         WalkingStyles.RegisterEventHandlers();
@@ -116,6 +119,7 @@ public class CoreServer : IScript
 
         PedDeathBroadcast.Register();
         PlayerNoClipState.Register();
+        PlayerFreecamState.Register();
         PlayerPresenceBroadcast.Register();
         PersonalVehicleBroadcast.Register();
         JoinLeaveBroadcast.Register();
@@ -145,6 +149,11 @@ public class CoreServer : IScript
             default:
                 SharedAPI.Log.Error(message);
                 break;
+        }
+
+        if (ServerCommands.Caller > 0)
+        {
+            API.EmitClient(ServerCommands.Caller, CommandEvents.Reply, (int)level, message);
         }
     }
 }

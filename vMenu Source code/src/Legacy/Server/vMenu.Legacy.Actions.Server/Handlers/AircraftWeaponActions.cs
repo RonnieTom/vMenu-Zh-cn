@@ -6,10 +6,12 @@ using CitizenFX.Core.Native;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+using vMenu.Enhanced.Configuration.Server;
 using vMenu.Enhanced.Data.Actions;
 using vMenu.Enhanced.Data.VehicleData;
 using vMenu.Enhanced.Logging;
 using vMenu.Enhanced.Serialization.Server;
+using vMenu.Enhanced.Webhooks.Server;
 
 using vMenu.Legacy.Hosting;
 
@@ -20,8 +22,6 @@ namespace vMenu.Enhanced.Actions.Server.Handlers;
 public static class AircraftWeaponActions
 {
     private const string ConfigFile = "config/aircraft-weapons.json";
-
-    private const int VehicleEntityType = 2;
 
     private const int Pilot = -1;
 
@@ -35,7 +35,7 @@ public static class AircraftWeaponActions
 
     private const int BurstAllowance = 10;
 
-    private const long BurstWindowMs = 2000;
+    private const int BurstWindowMs = 2000;
 
     private const string DroppedEvent = "playerDropped";
 
@@ -57,7 +57,7 @@ public static class AircraftWeaponActions
 
     private static readonly Dictionary<int, Starter> BlockedBy = [];
 
-    private static readonly Dictionary<int, Burst> Bursts = [];
+    private static readonly PlayerWindows Bursts = new();
 
     private static string _payload = "{}";
 
@@ -81,7 +81,7 @@ public static class AircraftWeaponActions
     private static ActionResponse Forward(Player source, string[] args)
     {
         if (args.Length < 2
-            || !int.TryParse(args[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var networkId)
+            || !ActionArgs.TryInt(args[0], out var networkId)
             || !AircraftWeaponEvents.IsKnown(args[1]))
         {
             return ActionResponse.InvalidRequest();
@@ -96,7 +96,7 @@ public static class AircraftWeaponActions
 
         var vehicle = networkId == 0 ? 0 : API.NetworkGetEntityFromNetworkId(networkId);
 
-        if (vehicle == 0 || !API.DoesEntityExist(vehicle) || API.GetEntityType(vehicle) != VehicleEntityType)
+        if (!Targets.IsVehicle(vehicle))
         {
             OpenedBy.Remove(networkId);
             BlockedBy.Remove(networkId);
@@ -203,25 +203,22 @@ public static class AircraftWeaponActions
 
     private static bool TakeAllowance(int player)
     {
-        var now = Environment.TickCount64;
+        var now = Environment.TickCount;
+        var burst = Bursts.For(player, now, BurstWindowMs);
 
-        if (!Bursts.TryGetValue(player, out var burst))
+        if (burst.Count >= BurstAllowance)
         {
-            Bursts[player] = burst = new Burst();
+            return false;
         }
 
-        if (now - burst.Started >= BurstWindowMs)
-        {
-            burst.Started = now;
-            burst.Count = 0;
-        }
+        burst.Add(now);
 
-        return ++burst.Count <= BurstAllowance;
+        return true;
     }
 
     private static void Forget(int player)
     {
-        Bursts.Remove(player);
+        Bursts.Forget(player);
 
         foreach (var networkId in OpenedBy.Where(entry => entry.Value.Source == player).Select(entry => entry.Key).ToList())
         {
@@ -270,11 +267,9 @@ public static class AircraftWeaponActions
         Aircraft.Clear();
         _payload = "{}";
 
-        var contents = API.LoadResourceFile(API.GetCurrentResourceName(), ConfigFile);
-
-        if (string.IsNullOrWhiteSpace(contents))
+        if (ResourceFile.Read(ConfigFile, "Config", "aircraft bombs and countermeasures use the built in positions")
+            is not { } contents)
         {
-            Log.Info($"[Config] No {ConfigFile} found, so aircraft bombs and countermeasures use the built in positions.");
             return;
         }
 
@@ -468,12 +463,5 @@ public static class AircraftWeaponActions
         public long At { get; } = Environment.TickCount64;
 
         public bool IsRecent(int player) => Source == player && Environment.TickCount64 - At <= UndoWindowMs;
-    }
-
-    private sealed class Burst
-    {
-        public long Started { get; set; }
-
-        public int Count { get; set; }
     }
 }

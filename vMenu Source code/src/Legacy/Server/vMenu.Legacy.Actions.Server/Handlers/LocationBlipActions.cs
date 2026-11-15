@@ -1,14 +1,10 @@
-using System.Globalization;
-using System.Text;
-
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
 
+using vMenu.Enhanced.Configuration.Server;
 using vMenu.Enhanced.Data.Actions;
 using vMenu.Enhanced.Data.Misc;
 using vMenu.Enhanced.Logging;
-using vMenu.Enhanced.Players.Server;
-using vMenu.Enhanced.Serialization.Server;
 
 using DisplaySettingsPermissions = vMenu.Enhanced.Data.Permissions.Menus.DisplaySettings;
 
@@ -38,11 +34,17 @@ public static class LocationBlipActions
 
     private const float RemoveRange = 2f;
 
-    private static readonly BlipFile Blips = new();
+    // Ungated on purpose: the always-on list is not optional, so everybody needs it.
+    private static readonly SyncedConfigFile<BlipFile> Store = new(
+        ConfigFile,
+        "Blips",
+        LocationBlipEvents.Set,
+        null,
+        "nothing was changed");
 
-    private static string _payload = "{}";
+    private static BlipFile Blips => Store.Value;
 
-    public static string Payload => _payload;
+    public static string Payload => Store.Payload;
 
     public static void Register()
     {
@@ -61,11 +63,11 @@ public static class LocationBlipActions
         Script.EventHandlers[LocationBlipEvents.Request] += new Action<Player>(OnRequested);
     }
 
-    private static void OnRequested([FromSource] Player source) => SendTo(source);
+    private static void OnRequested([FromSource] Player source) => Store.SendTo(source);
 
     private static ActionResponse AddBlip(Player source, string[] args)
     {
-        if (args.Length < 7 || Trimmed(args[1]) is not { } name)
+        if (args.Length < 7 || ActionArgs.Trimmed(args[1]) is not { } name)
         {
             return ActionResponse.InvalidRequest();
         }
@@ -75,10 +77,10 @@ public static class LocationBlipActions
             return ActionResponse.NotFound();
         }
 
-        if (!TryParseInt(args[2], out var sprite) || !TryParseInt(args[3], out var colour)
-            || !TryParse(args[4], out var scale)
-            || !TryParse(args[5], out var x) || !TryParse(args[6], out var y)
-            || args.Length < 8 || !TryParse(args[7], out var z))
+        if (!ActionArgs.TryInt(args[2], out var sprite) || !ActionArgs.TryInt(args[3], out var colour)
+            || !ActionArgs.TryFloat(args[4], out var scale)
+            || !ActionArgs.TryFloat(args[5], out var x) || !ActionArgs.TryFloat(args[6], out var y)
+            || args.Length < 8 || !ActionArgs.TryFloat(args[7], out var z))
         {
             return ActionResponse.InvalidRequest();
         }
@@ -106,12 +108,12 @@ public static class LocationBlipActions
 
         list.Add(added);
 
-        return Commit(source, $"added blip '{name}'", () => list.Remove(added));
+        return Store.Commit(source, $"added blip '{name}'", () => list.Remove(added));
     }
 
     private static ActionResponse RemoveBlip(Player source, string[] args)
     {
-        if (args.Length < 5 || Trimmed(args[1]) is not { } name)
+        if (args.Length < 5 || ActionArgs.Trimmed(args[1]) is not { } name)
         {
             return ActionResponse.InvalidRequest();
         }
@@ -121,7 +123,9 @@ public static class LocationBlipActions
             return ActionResponse.NotFound();
         }
 
-        if (!TryParse(args[2], out var x) || !TryParse(args[3], out var y) || !TryParse(args[4], out var z))
+        if (!ActionArgs.TryFloat(args[2], out var x)
+            || !ActionArgs.TryFloat(args[3], out var y)
+            || !ActionArgs.TryFloat(args[4], out var z))
         {
             return ActionResponse.InvalidRequest();
         }
@@ -137,54 +141,10 @@ public static class LocationBlipActions
 
         list.RemoveAt(at);
 
-        return Commit(source, $"removed blip '{removed.Name}'", () => list.Insert(at, removed));
+        return Store.Commit(source, $"removed blip '{removed.Name}'", () => list.Insert(at, removed));
     }
 
-    private static ActionResponse Commit(Player source, string what, Action undo)
-    {
-        if (!Write(ServerJson.SerializeIndented(Blips)))
-        {
-            undo();
-
-            return ActionResponse.Failed();
-        }
-
-        _payload = ServerJson.Serialize(Blips);
-
-        foreach (var connected in ConnectedPlayers.All())
-        {
-            SendTo(Script.Players[connected.ServerId]);
-        }
-
-        Log.Debug($"[Blips] {source} {what}.");
-
-        return ActionResponse.Ok();
-    }
-
-    private static bool Write(string json)
-    {
-        try
-        {
-            if (NativeFixer.SaveResourceFile(API.GetCurrentResourceName(), ConfigFile, Encoding.UTF8.GetBytes(json)))
-            {
-                return true;
-            }
-
-            Log.Error($"[Blips] {ConfigFile} could not be written, so nothing was changed.");
-        }
-        catch (Exception exception)
-        {
-            Log.Error($"[Blips] Writing {ConfigFile} threw, so nothing was changed: {exception}");
-        }
-
-        return false;
-    }
-
-    // Ungated on purpose: the always-on list is not optional, so everybody needs it.
-    private static void SendTo(Player player) =>
-        Script.TriggerClientEvent(player.ServerId(), LocationBlipEvents.Set, _payload);
-
-    private static List<BlipEntry>? ListNamed(string? which) => Trimmed(which)?.ToLowerInvariant() switch
+    private static List<BlipEntry>? ListNamed(string? which) => ActionArgs.Trimmed(which)?.ToLowerInvariant() switch
     {
         AlwaysOnList => Blips.AlwaysOn,
         ToggleableList => Blips.Toggleable,
@@ -227,41 +187,22 @@ public static class LocationBlipActions
         return (dx * dx) + (dy * dy) + (dz * dz);
     }
 
-    private static string? Trimmed(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static bool TryParse(string value, out float parsed) =>
-        float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed);
-
-    private static bool TryParseInt(string value, out int parsed) =>
-        int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed);
-
     private static void Load()
     {
-        var contents = API.LoadResourceFile(API.GetCurrentResourceName(), ConfigFile);
-
-        if (string.IsNullOrWhiteSpace(contents))
+        if (!ResourceFile.TryLoad<BlipFile>(
+            ConfigFile,
+            "Blips",
+            "no map blips are added",
+            "an object with an alwaysOn and a toggleable list",
+            out var read))
         {
-            Log.Info($"[Blips] No {ConfigFile} found, so no map blips are added.");
-            return;
-        }
-
-        if (!ServerJson.TryDeserialize<BlipFile>(contents, out var read, out var error))
-        {
-            Log.Error($"[Blips] {ConfigFile} could not be parsed, so no map blips are added: {error}");
-            return;
-        }
-
-        if (read is null)
-        {
-            Log.Error($"[Blips] {ConfigFile} has to hold an object with an alwaysOn and a toggleable list, so no map blips are added.");
             return;
         }
 
         Blips.AlwaysOn.AddRange(Keep(read.AlwaysOn, AlwaysOnList));
         Blips.Toggleable.AddRange(Keep(read.Toggleable, ToggleableList));
 
-        _payload = ServerJson.Serialize(Blips);
+        Store.Rebuild();
 
         Log.Debug($"[Blips] {Blips.AlwaysOn.Count} always on and {Blips.Toggleable.Count} toggleable blip(s) loaded from {ConfigFile}.");
     }

@@ -7,6 +7,7 @@ using vMenu.Enhanced.MenuFramework;
 using vMenu.Enhanced.Localization;
 using vMenu.Enhanced.Menus.Players.Appearance;
 using vMenu.Enhanced.Menus.Saved;
+using vMenu.Enhanced.Permissions;
 
 using CharacterCreatorPermissions = vMenu.Enhanced.Data.Permissions.Menus.CharacterCreator;
 
@@ -43,7 +44,7 @@ internal sealed class CharacterBuilder
                     components: PedComponentSlots.Clothing,
                     fitTorso: true);
 
-                child.OnOpened = _ => CharacterCamera.Page = CameraFocus.FullBody;
+                child.OnOpened += _ => CharacterCamera.Page = CameraFocus.FullBody;
             },
             CharacterCreatorPermissions.Create);
 
@@ -55,6 +56,20 @@ internal sealed class CharacterBuilder
                     : Loc.CharacterCreator.EditSubtitle))),
             Build,
             CharacterCreatorPermissions.Create);
+
+        // Removed first, because a menu rebuild attaches again.
+        StaffOnlyMode.Changed -= LeaveIfLocked;
+        StaffOnlyMode.Changed += LeaveIfLocked;
+    }
+
+    // The menu lock closes the creator without running its own exit, which would leave the camera and the
+    // draft ped behind with no menu to get out of them.
+    private void LeaveIfLocked()
+    {
+        if (StaffOnlyMode.Active && MpCharacterState.IsEditing)
+        {
+            _ = LeaveAsync();
+        }
     }
 
     internal async Task OpenAsync(MpCharacter character, MpCharacterEntry? from, bool restore)
@@ -114,80 +129,65 @@ internal sealed class CharacterBuilder
 
     private void Build(MenuBuilder menu)
     {
-        menu.Entries.Add(new CheckboxEntry
+        menu.Entries.Add(new CheckboxEntry(Loc.CharacterCreator.DisableAutoCamera)
         {
-            Text = MenuText.Key(Loc.CharacterCreator.DisableAutoCamera),
-            Description = MenuText.Key(Loc.CharacterCreator.DisableAutoCameraDescription),
             Gate = CharacterCreatorPermissions.Create,
             ReadState = () => CharacterCamera.AutoCameraDisabled,
             OnChanged = changed => CharacterCamera.AutoCameraDisabled = changed.Checked,
         });
 
-        menu.Entries.Add(new ButtonEntry
+        menu.Entries.Add(new ButtonEntry(Loc.CharacterCreator.Randomize)
         {
-            Text = MenuText.Key(Loc.CharacterCreator.Randomize),
-            Description = MenuText.Key(Loc.CharacterCreator.RandomizeDescription),
             Gate = CharacterCreatorPermissions.Create,
             OnSelected = _ => Randomise(),
         });
 
         menu.Entries.Add(Child(
             Loc.CharacterCreator.Inheritance,
-            Loc.CharacterCreator.InheritanceDescription,
             Loc.CharacterCreator.InheritanceSubtitle,
             CharacterInheritanceRows.Attach));
 
         menu.Entries.Add(Child(
             Loc.CharacterCreator.Appearance,
-            Loc.CharacterCreator.AppearanceDescription,
             Loc.CharacterCreator.AppearanceSubtitle,
             CharacterAppearanceRows.Attach));
 
         menu.Entries.Add(Child(
             Loc.CharacterCreator.FaceShape,
-            Loc.CharacterCreator.FaceShapeDescription,
             Loc.CharacterCreator.FaceShapeSubtitle,
             CharacterFaceRows.Attach));
 
         menu.Entries.Add(Child(
             Loc.CharacterCreator.Tattoos,
-            Loc.CharacterCreator.TattoosDescription,
             Loc.CharacterCreator.TattoosSubtitle,
             CharacterTattooRows.Attach));
 
         menu.Entries.Add(Child(
             Loc.CharacterCreator.Clothes,
-            Loc.CharacterCreator.ClothesDescription,
             Loc.CharacterCreator.ClothesSubtitle,
             child => Wardrobe(child, PedCustomizationRows.PedRows.Components)));
 
         menu.Entries.Add(Child(
             Loc.CharacterCreator.Props,
-            Loc.CharacterCreator.PropsDescription,
             Loc.CharacterCreator.PropsSubtitle,
             child => Wardrobe(child, PedCustomizationRows.PedRows.Props)));
 
         menu.Entries.Add(Child(
             Loc.CharacterCreator.Collections,
-            Loc.CharacterCreator.CollectionsDescription,
             Loc.CharacterCreator.CollectionsSubtitle,
             BuildCollectionList));
 
         menu.Entries.Add(ExpressionRow());
         menu.Entries.Add(CategoryRow());
 
-        menu.Entries.Add(new ButtonEntry
+        menu.Entries.Add(new ButtonEntry(Loc.CharacterCreator.Save)
         {
-            Text = MenuText.Key(Loc.CharacterCreator.Save),
-            Description = MenuText.Key(Loc.CharacterCreator.SaveDescription),
             Gate = CharacterCreatorPermissions.Save,
             OnSelectedAsync = _ => SaveAsync(),
         });
 
-        menu.Entries.Add(new ConfirmButtonEntry
+        menu.Entries.Add(new ConfirmButtonEntry(Loc.CharacterCreator.Exit)
         {
-            Text = MenuText.Key(Loc.CharacterCreator.Exit),
-            Description = MenuText.Key(Loc.CharacterCreator.ExitDescription),
             ConfirmationDescription = MenuText.Key(Loc.CharacterCreator.ExitConfirm),
             OnConfirmedAsync = _ => LeaveAsync(),
         });
@@ -212,11 +212,9 @@ internal sealed class CharacterBuilder
         };
     }
 
-    private static SubmenuEntry Child(string name, string description, string subtitle, Action<MenuBuilder> build) =>
-        new()
+    private static SubmenuEntry Child(string textKey, string subtitle, Action<MenuBuilder> build) =>
+        new(textKey)
         {
-            Text = MenuText.Key(name),
-            Description = MenuText.Key(description),
             MenuSubtitle = MenuText.Key(subtitle),
             Gate = CharacterCreatorPermissions.Create,
             Build = build,
@@ -231,7 +229,7 @@ internal sealed class CharacterBuilder
             PedComponentSlots.Clothing,
             fitTorso: rows == PedCustomizationRows.PedRows.Components);
 
-        menu.OnOpened = _ =>
+        menu.OnOpened += _ =>
         {
             CharacterCamera.Page = rows == PedCustomizationRows.PedRows.Props
                 ? CameraFocus.Head
@@ -265,11 +263,8 @@ internal sealed class CharacterBuilder
             MenuText.Key(Loc.CharacterCreator.ExpressionSulk),
         };
 
-        return new ListEntry
+        return new ListEntry(Loc.CharacterCreator.Expression, options)
         {
-            Text = MenuText.Key(Loc.CharacterCreator.Expression),
-            Description = MenuText.Key(Loc.CharacterCreator.ExpressionDescription),
-            Options = options,
             Gate = CharacterCreatorPermissions.Create,
             Configure = item => item.ItemData = CameraFocus.Head,
             ReadSelectedIndex = () => ExpressionIndex(),
@@ -306,11 +301,8 @@ internal sealed class CharacterBuilder
 
     private static ListEntry CategoryRow()
     {
-        return new ListEntry
+        return new ListEntry(Loc.CharacterCreator.Category, CategoryOptions())
         {
-            Text = MenuText.Key(Loc.CharacterCreator.Category),
-            Description = MenuText.Key(Loc.CharacterCreator.CategoryDescription),
-            Options = CategoryOptions(),
             Gate = CharacterCreatorPermissions.Save,
 
             ReadSelectedIndex = CategoryIndex,
@@ -384,11 +376,11 @@ internal sealed class CharacterBuilder
         {
             CharacterCamera.Page = CameraFocus.FullBody;
 
-            Refill(menu, CollectionRows());
+            menu.ReplaceEntries(CollectionRows());
         };
     }
 
-    private IReadOnlyList<MenuEntry> CollectionRows()
+    private List<MenuEntry> CollectionRows()
     {
         var rows = new List<MenuEntry>();
 
@@ -561,16 +553,4 @@ internal sealed class CharacterBuilder
         MenuController.CloseAllMenus();
     }
 
-    private static void Refill(MenuBuilder builder, IReadOnlyList<MenuEntry> rows)
-    {
-        var was = builder.Menu.CurrentIndex;
-        var offset = builder.Menu.ViewIndexOffset;
-
-        builder.ClearEntries();
-        builder.AddRange(rows);
-
-        var keep = was < builder.Menu.GetMenuItems().Count;
-
-        builder.Menu.RefreshIndex(keep ? was : 0, keep ? offset : 0);
-    }
 }

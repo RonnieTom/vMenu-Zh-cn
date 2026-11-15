@@ -37,6 +37,7 @@
     <Project Path="src/Enhanced/Client/vMenu.Enhanced.Configuration/vMenu.Enhanced.Configuration.csproj" />
     <Project Path="src/Enhanced/Client/vMenu.Enhanced.Core/vMenu.Enhanced.Core.csproj" />
     <Project Path="src/Enhanced/Client/vMenu.Enhanced.Events/vMenu.Enhanced.Events.csproj" />
+    <Project Path="src/Enhanced/Client/vMenu.Enhanced.Freecam/vMenu.Enhanced.Freecam.csproj" />
     <Project Path="src/Enhanced/Client/vMenu.Enhanced.MenuFramework/vMenu.Enhanced.MenuFramework.csproj" />
     <Project Path="src/Enhanced/Client/vMenu.Enhanced.Menus/vMenu.Enhanced.Menus.csproj" />
     <Project Path="src/Enhanced/Client/vMenu.Enhanced.NativeHooks/vMenu.Enhanced.NativeHooks.csproj" />
@@ -81,6 +82,7 @@
     <Project Path="src/Legacy/Client/vMenu.Legacy.Configuration/vMenu.Legacy.Configuration.csproj" />
     <Project Path="src/Legacy/Client/vMenu.Legacy.Core/vMenu.Legacy.Core.csproj" />
     <Project Path="src/Legacy/Client/vMenu.Legacy.Events/vMenu.Legacy.Events.csproj" />
+    <Project Path="src/Legacy/Client/vMenu.Legacy.Freecam/vMenu.Legacy.Freecam.csproj" />
     <Project Path="src/Legacy/Client/vMenu.Legacy.Hosting/vMenu.Legacy.Hosting.csproj" />
     <Project Path="src/Legacy/Client/vMenu.Legacy.MenuFramework/vMenu.Legacy.MenuFramework.csproj" />
     <Project Path="src/Legacy/Client/vMenu.Legacy.Menus/vMenu.Legacy.Menus.csproj" />
@@ -129,6 +131,7 @@
     </Project>
     <Project Path="tools/LanguageTemplate/LanguageTemplate.csproj" />
     <Project Path="tools/LegacyChecks/LegacyChecks.csproj" />
+    <Project Path="tools/vMenu.Enhanced.Localization.Generator/vMenu.Enhanced.Localization.Generator.csproj" />
     <Project Path="tools/vMenu.Enhanced.NativeHooks.Generator/vMenu.Enhanced.NativeHooks.Generator.csproj" />
   </Folder>
 </Solution>

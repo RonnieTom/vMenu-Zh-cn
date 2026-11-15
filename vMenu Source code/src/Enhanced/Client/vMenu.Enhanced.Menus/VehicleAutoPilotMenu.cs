@@ -31,18 +31,18 @@ public sealed class VehicleAutoPilotMenu : MenuDefinition
             MenuText.Key(Loc.AutoPilot.DriveToPointSubtitle),
             _ => { });
 
-        _pointPicker.Builder.OnOpened = _ => Refill(_pointPicker.Builder, PointRows());
+        _pointPicker.Builder.OnOpened = _ => _pointPicker.Builder.ReplaceEntries(PointRows());
 
         _pathPicker = menu.AddDetachedMenu(
             MenuText.Key(Loc.AutoPilot.ReplayPath),
             MenuText.Key(Loc.AutoPilot.ReplayPathSubtitle),
             _ => { });
 
-        _pathPicker.Builder.OnOpened = _ => Refill(_pathPicker.Builder, PathRows());
+        _pathPicker.Builder.OnOpened = _ => _pathPicker.Builder.ReplaceEntries(PathRows());
 
         VehicleAutoPilot.Changed += () => MenuRegistry.Refresh(menu.Menu);
 
-        menu.Entries.Add(Group(Loc.AutoPilot.GroupStatus, Loc.AutoPilot.GroupStatusDescription));
+        menu.Entries.Add(new SeparatorEntry(Loc.AutoPilot.GroupStatus));
 
         menu.Entries.Add(new SeparatorEntry
         {
@@ -51,12 +51,10 @@ public sealed class VehicleAutoPilotMenu : MenuDefinition
             ShowArrows = false,
         });
 
-        menu.Entries.Add(Group(Loc.AutoPilot.GroupStart, Loc.AutoPilot.GroupStartDescription));
+        menu.Entries.Add(new SeparatorEntry(Loc.AutoPilot.GroupStart));
 
-        menu.Entries.Add(new ButtonEntry
+        menu.Entries.Add(new ButtonEntry(Loc.AutoPilot.DriveToWaypoint)
         {
-            Text = MenuText.Key(Loc.AutoPilot.DriveToWaypoint),
-            Description = MenuText.Key(Loc.AutoPilot.DriveToWaypointDescription),
             OnSelected = _ =>
             {
                 if (VehicleAutoPilot.DriveToWaypoint())
@@ -66,10 +64,8 @@ public sealed class VehicleAutoPilotMenu : MenuDefinition
             },
         });
 
-        menu.Entries.Add(new ButtonEntry
+        menu.Entries.Add(new ButtonEntry(Loc.AutoPilot.DriveWander)
         {
-            Text = MenuText.Key(Loc.AutoPilot.DriveWander),
-            Description = MenuText.Key(Loc.AutoPilot.DriveWanderDescription),
             OnSelected = _ =>
             {
                 if (VehicleAutoPilot.Wander())
@@ -79,23 +75,19 @@ public sealed class VehicleAutoPilotMenu : MenuDefinition
             },
         });
 
-        menu.Entries.Add(new ButtonEntry
+        menu.Entries.Add(new ButtonEntry(Loc.AutoPilot.DriveToPoint)
         {
-            Text = MenuText.Key(Loc.AutoPilot.DriveToPoint),
-            Description = MenuText.Key(Loc.AutoPilot.DriveToPointDescription),
             Label = MenuText.Literal("→"),
             OnSelected = _ => _pointPicker?.Open(),
         });
 
-        menu.Entries.Add(new ButtonEntry
+        menu.Entries.Add(new ButtonEntry(Loc.AutoPilot.ReplayPath)
         {
-            Text = MenuText.Key(Loc.AutoPilot.ReplayPath),
-            Description = MenuText.Key(Loc.AutoPilot.ReplayPathDescription),
             Label = MenuText.Literal("→"),
             OnSelected = _ => _pathPicker?.Open(),
         });
 
-        menu.Entries.Add(Group(Loc.AutoPilot.GroupControl, Loc.AutoPilot.GroupControlDescription));
+        menu.Entries.Add(new SeparatorEntry(Loc.AutoPilot.GroupControl));
 
         menu.Entries.Add(new ButtonEntry
         {
@@ -121,10 +113,8 @@ public sealed class VehicleAutoPilotMenu : MenuDefinition
             },
         });
 
-        menu.Entries.Add(new ButtonEntry
+        menu.Entries.Add(new ButtonEntry(Loc.AutoPilot.Stop)
         {
-            Text = MenuText.Key(Loc.AutoPilot.Stop),
-            Description = MenuText.Key(Loc.AutoPilot.StopDescription),
             ReadEnabled = () => VehicleAutoPilot.HasTask,
             OnSelected = _ =>
             {
@@ -134,65 +124,57 @@ public sealed class VehicleAutoPilotMenu : MenuDefinition
             },
         });
 
-        menu.Entries.Add(new ListEntry
-        {
-            Text = MenuText.Key(Loc.AutoPilot.StopAction),
-            Description = MenuText.Key(Loc.AutoPilot.StopActionDescription),
-            Options =
+        menu.Entries.Add(new ListEntry(
+            Loc.AutoPilot.StopAction,
             [
                 MenuText.Key(Loc.AutoPilot.StopActionPark),
                 MenuText.Key(Loc.AutoPilot.StopActionBrake),
                 MenuText.Key(Loc.AutoPilot.StopActionCoast),
-            ],
+            ])
+        {
             ReadSelectedIndex = () => Math.Clamp(UserDefaults.AutoPilotStopAction.Value, 0, 2),
             OnIndexChanged = changed => UserDefaults.AutoPilotStopAction.Value = changed.NewIndex,
         });
 
-        menu.Entries.Add(new DynamicListEntry
-        {
-            Text = MenuText.Key(Loc.AutoPilot.CruiseSpeed),
-            Description = MenuText.Key(Loc.AutoPilot.CruiseSpeedDescription),
-            ReadValue = CruiseSpeed,
-            Change = changing =>
+        menu.Entries.Add(new DynamicListEntry(
+            Loc.AutoPilot.CruiseSpeed,
+            CruiseSpeed,
+            changing =>
             {
                 var next = UserDefaults.AutoPilotCruiseSpeed.Value + (changing.Left ? -CruiseStep : CruiseStep);
 
                 UserDefaults.AutoPilotCruiseSpeed.Value = Math.Clamp(next, 0, MaxCruiseSpeed);
 
                 return CruiseSpeed();
-            },
-        });
+            }));
 
-        menu.Entries.Add(Group(Loc.AutoPilot.GroupProfiles, Loc.AutoPilot.GroupProfilesDescription));
-
-        menu.Entries.Add(ProfileRow(
-            AutoPilotCategory.Vehicle, Loc.AutoPilot.ProfileVehicle, Loc.AutoPilot.ProfileVehicleDescription));
+        menu.Entries.Add(new SeparatorEntry(Loc.AutoPilot.GroupProfiles));
 
         menu.Entries.Add(ProfileRow(
-            AutoPilotCategory.Plane, Loc.AutoPilot.ProfilePlane, Loc.AutoPilot.ProfilePlaneDescription));
+            AutoPilotCategory.Vehicle, Loc.AutoPilot.ProfileVehicle));
 
         menu.Entries.Add(ProfileRow(
-            AutoPilotCategory.Boat, Loc.AutoPilot.ProfileBoat, Loc.AutoPilot.ProfileBoatDescription));
+            AutoPilotCategory.Plane, Loc.AutoPilot.ProfilePlane));
 
         menu.Entries.Add(ProfileRow(
-            AutoPilotCategory.Helicopter, Loc.AutoPilot.ProfileHeli, Loc.AutoPilot.ProfileHeliDescription));
+            AutoPilotCategory.Boat, Loc.AutoPilot.ProfileBoat));
 
-        menu.Entries.Add(Group(Loc.AutoPilot.GroupManage, Loc.AutoPilot.GroupManageDescription));
+        menu.Entries.Add(ProfileRow(
+            AutoPilotCategory.Helicopter, Loc.AutoPilot.ProfileHeli));
+
+        menu.Entries.Add(new SeparatorEntry(Loc.AutoPilot.GroupManage));
 
         menu.Entries.Add(SubmenuEntry.For(new AutoPilotProfilesMenu()));
 
         menu.Entries.Add(SubmenuEntry.For(new AutoPilotRoutesMenu()));
     }
 
-    private static DynamicListEntry ProfileRow(AutoPilotCategory category, string textKey, string descriptionKey)
+    private static DynamicListEntry ProfileRow(AutoPilotCategory category, string textKey)
     {
-        return new DynamicListEntry
-        {
-            Text = MenuText.Key(textKey),
-            Description = MenuText.Key(descriptionKey),
-            ReadValue = () => AutoPilotDefaults.Resolve(category).Name,
-            Change = changing => Shift(category, changing.Left),
-        };
+        return new DynamicListEntry(
+            textKey,
+            () => AutoPilotDefaults.Resolve(category).Name,
+            changing => Shift(category, changing.Left));
     }
 
     private static string Shift(AutoPilotCategory category, bool left)
@@ -231,7 +213,7 @@ public sealed class VehicleAutoPilotMenu : MenuDefinition
 
         if (points.Count == 0)
         {
-            rows.Add(Placeholder(Loc.AutoPilot.PointsEmpty, Loc.AutoPilot.PointsEmptyDescription));
+            rows.Add(AutoPilotRows.Placeholder(Loc.AutoPilot.PointsEmpty));
 
             return rows;
         }
@@ -270,7 +252,7 @@ public sealed class VehicleAutoPilotMenu : MenuDefinition
 
         if (paths.Count == 0)
         {
-            rows.Add(Placeholder(Loc.AutoPilot.PathsEmpty, Loc.AutoPilot.PathsEmptyDescription));
+            rows.Add(AutoPilotRows.Placeholder(Loc.AutoPilot.PathsEmpty));
 
             return rows;
         }
@@ -338,29 +320,4 @@ public sealed class VehicleAutoPilotMenu : MenuDefinition
         return MenuText.Key(Loc.AutoPilot.StatusPaused, ("what", doing)).Resolve(Localizer.Current);
     }
 
-    private static SeparatorEntry Group(string textKey, string descriptionKey) => new()
-    {
-        Text = MenuText.Key(textKey),
-        Description = MenuText.Key(descriptionKey),
-    };
-
-    private static ButtonEntry Placeholder(string textKey, string descriptionKey) => new()
-    {
-        Text = MenuText.Key(textKey),
-        Description = MenuText.Key(descriptionKey),
-        ReadEnabled = () => false,
-    };
-
-    private static void Refill(MenuBuilder builder, IReadOnlyList<MenuEntry> rows)
-    {
-        var was = builder.Menu.CurrentIndex;
-        var offset = builder.Menu.ViewIndexOffset;
-
-        builder.ClearEntries();
-        builder.AddRange(rows);
-
-        var keep = was < builder.Menu.GetMenuItems().Count;
-
-        builder.Menu.RefreshIndex(keep ? was : 0, keep ? offset : 0);
-    }
 }

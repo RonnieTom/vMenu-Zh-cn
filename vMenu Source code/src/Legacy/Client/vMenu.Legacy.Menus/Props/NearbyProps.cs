@@ -61,7 +61,7 @@ internal static class NearbyProps
         menu.AddRange(Rows());
     }
 
-    private static IReadOnlyList<MenuEntry> Rows()
+    private static List<MenuEntry> Rows()
     {
         var found = Find();
 
@@ -69,10 +69,8 @@ internal static class NearbyProps
         {
             return
             [
-                new ButtonEntry
+                new ButtonEntry(Loc.PropSpawner.NearbyEmpty)
                 {
-                    Text = MenuText.Key(Loc.PropSpawner.NearbyEmpty),
-                    Description = MenuText.Key(Loc.PropSpawner.NearbyEmptyDescription),
                     ReadEnabled = static () => false,
                 },
             ];

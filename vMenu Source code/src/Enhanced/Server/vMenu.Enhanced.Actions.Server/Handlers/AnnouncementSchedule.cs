@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using System.Text.Json.Serialization;
 
 using CitizenFX.FiveM.Server;
@@ -11,7 +9,6 @@ using vMenu.Enhanced.Data.Admin;
 using vMenu.Enhanced.Data.Ticks;
 using vMenu.Enhanced.Data.World;
 using vMenu.Enhanced.Logging;
-using vMenu.Enhanced.Serialization.Server;
 using vMenu.Enhanced.Ticks.Server;
 
 using AdminPermissions = vMenu.Enhanced.Data.Permissions.Menus.Admin;
@@ -120,14 +117,14 @@ public static class AnnouncementSchedule
     private static ActionResponse AddAnnouncement(Player source, string[] args)
     {
         if (args.Length < 5
-            || Trimmed(args[0]) is not { } name
-            || Trimmed(args[1]) is not { } text
-            || !int.TryParse(args[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var everyMinutes))
+            || ActionArgs.Trimmed(args[0]) is not { } name
+            || ActionArgs.Trimmed(args[1]) is not { } text
+            || !ActionArgs.TryInt(args[2], out var everyMinutes))
         {
             return ActionResponse.InvalidRequest();
         }
 
-        var at = Trimmed(args[3]) ?? string.Empty;
+        var at = ActionArgs.Trimmed(args[3]) ?? string.Empty;
         var clock = AnnouncementClock.IsGame(args[4]) ? AnnouncementClock.Game : AnnouncementClock.Real;
 
         var added = new Scheduled
@@ -167,8 +164,8 @@ public static class AnnouncementSchedule
     private static ActionResponse RemoveAnnouncement(Player source, string[] args)
     {
         if (args.Length < 2
-            || !int.TryParse(args[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var index)
-            || Trimmed(args[1]) is not { } name)
+            || !ActionArgs.TryInt(args[0], out var index)
+            || ActionArgs.Trimmed(args[1]) is not { } name)
         {
             return ActionResponse.InvalidRequest();
         }
@@ -198,26 +195,13 @@ public static class AnnouncementSchedule
 
     private static void Load()
     {
-        var contents = Native.LoadResourceFile(Native.GetCurrentResourceName(), ConfigFile);
-
-        if (string.IsNullOrWhiteSpace(contents))
+        if (!ResourceFile.TryLoad<ScheduleFile>(
+            ConfigFile,
+            "Admin",
+            "no announcements send themselves",
+            "an object with an announcements list",
+            out var read))
         {
-            Log.Info($"[Admin] No {ConfigFile} found, so no announcements send themselves.");
-
-            return;
-        }
-
-        if (!ServerJson.TryDeserialize<ScheduleFile>(contents, out var read, out var error))
-        {
-            Log.Error($"[Admin] {ConfigFile} could not be parsed, so no announcements send themselves: {error}");
-
-            return;
-        }
-
-        if (read is null)
-        {
-            Log.Error($"[Admin] {ConfigFile} has to hold an object with an announcements list, so none send themselves.");
-
             return;
         }
 
@@ -266,29 +250,12 @@ public static class AnnouncementSchedule
         }
     }
 
-    private static bool Save()
-    {
-        try
-        {
-            var json = ServerJson.SerializeIndented(new ScheduleFile { Announcements = Entries });
-
-            if (Native.SaveResourceFile(Native.GetCurrentResourceName(), ConfigFile, Encoding.UTF8.GetBytes(json)))
-            {
-                return true;
-            }
-
-            Log.Error($"[Admin] {ConfigFile} could not be written, so nothing was changed.");
-        }
-        catch (Exception exception)
-        {
-            Log.Error($"[Admin] Writing {ConfigFile} threw, so nothing was changed: {exception}");
-        }
-
-        return false;
-    }
-
-    private static string? Trimmed(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static bool Save() =>
+        ResourceFile.TryWrite(
+            ConfigFile,
+            "Admin",
+            new ScheduleFile { Announcements = Entries },
+            "nothing was changed");
 
     private static string Cap(string value, int limit) =>
         value.Length <= limit ? value : value[..limit];
@@ -490,8 +457,8 @@ public static class AnnouncementSchedule
             var parts = at.Trim().Split(':', 2);
 
             if (parts.Length != 2
-                || !int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var hour)
-                || !int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var minute)
+                || !ActionArgs.TryInt(parts[0], out var hour)
+                || !ActionArgs.TryInt(parts[1], out var minute)
                 || hour is < 0 or > 23
                 || minute is < 0 or > 59)
             {

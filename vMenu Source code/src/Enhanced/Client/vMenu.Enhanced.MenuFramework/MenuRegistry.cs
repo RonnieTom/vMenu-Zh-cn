@@ -30,6 +30,7 @@ public static class MenuRegistry
         // Keybinds get registered with the game at startup, so changing one takes a restart either way.
         KeyBindingSettings.MenuToggleKey,
         KeyBindingSettings.NoClipToggleKey,
+        KeyBindingSettings.FreecamToggleKey,
         KeyBindingSettings.TeleportKey,
     ];
 
@@ -351,7 +352,8 @@ public static class MenuRegistry
     }
 
     // A menu that is not the framework's has no gate to fail.
-    internal static bool CanOpen(Menu menu) => !HostsByMenu.TryGetValue(menu, out var host) || host.IsReachable();
+    internal static bool CanOpen(Menu menu) =>
+        !StaffOnlyMode.Active && (!HostsByMenu.TryGetValue(menu, out var host) || host.IsReachable());
 
     // MenuAPI removes the menu behind a row when that row is dropped, so without this the framework would
     // keep walking a host whose menu no longer exists on every gate refresh.
