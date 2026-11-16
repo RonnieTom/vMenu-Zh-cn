@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+using System.Text;
 
 using CitizenFX.FiveM.Client;
 
@@ -20,9 +20,6 @@ public static class Notifications
 
     // Thirty seconds of waiting for a spawn, after which the message is shown regardless.
     private const int MaxVisibilityChecks = 60;
-
-    // GTA feed codes (~g~, ~s~, ~n~, …) mean nothing to ox_lib; strip them to plain text.
-    private static readonly Regex GtaCodes = new(@"~[a-zA-Z0-9]~", RegexOptions.Compiled);
 
     public static void Info(MenuText text, int durationMs = DefaultDurationMs) =>
         Show(NotificationStyle.Info, text, durationMs);
@@ -81,6 +78,7 @@ public static class Notifications
             }));
     }
 
+    // Manual scan — FiveM Legacy's Mono rejects Regex.ValidateMatchTimeout.
     private static string StripGtaCodes(string text)
     {
         if (string.IsNullOrEmpty(text))
@@ -88,7 +86,23 @@ public static class Notifications
             return text;
         }
 
-        return GtaCodes.Replace(text, string.Empty).Trim();
+        var builder = new StringBuilder(text.Length);
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] == '~'
+                && i + 2 < text.Length
+                && text[i + 2] == '~'
+                && char.IsLetterOrDigit(text[i + 1]))
+            {
+                i += 2;
+                continue;
+            }
+
+            builder.Append(text[i]);
+        }
+
+        return builder.ToString().Trim();
     }
 
     private sealed class OxNotifyMessage
