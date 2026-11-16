@@ -1,16 +1,14 @@
+using System.Text.RegularExpressions;
+
 using CitizenFX.FiveM.Client;
 
-using vMenu.Enhanced.Data.Ticks;
+using vMenu.Enhanced.BrokenNatives;
 using vMenu.Enhanced.Localization;
 using vMenu.Enhanced.Serialization;
-using vMenu.Enhanced.Ticks;
 
 namespace vMenu.Enhanced.MenuFramework;
 
-/// <summary>Short messages stacked above the minimap, drawn by the NUI page rather than the game's feed.
-/// Nothing here takes focus or waits for an answer, so the page needs no handshake. Where the stack
-/// sits depends on the safe zone and the map state, neither of which the page can see, so the client
-/// works it out and sends it once per notification.</summary>
+/// <summary>Echo911: short player messages go through ox_lib instead of vMenu's NUI toast stack.</summary>
 public static class Notifications
 {
     /// <summary>Long enough to read a sentence without hurrying, short enough not to sit in the way.</summary>
@@ -23,26 +21,8 @@ public static class Notifications
     // Thirty seconds of waiting for a spawn, after which the message is shown regardless.
     private const int MaxVisibilityChecks = 60;
 
-    // What the page hands a frozen message back when the pause menu closes, mirrored here.
-    private const int PauseGraceMs = 2000;
-
-    // Covers the fade the page plays after a message's time is up.
-    private const int ExitGraceMs = 500;
-
-    private const long PauseCheckIntervalMs = 100;
-
-    private const string PausedMessage = """{"type":"notify_pause","paused":true}""";
-
-    private const string ResumedMessage = """{"type":"notify_pause","paused":false}""";
-
-    private static TickHandle? _pauseTick;
-
-    private static bool _paused;
-
-    // Game time by which every message sent so far has had its say.
-    private static long _liveUntil;
-
-    private static long _polledAt;
+    // GTA feed codes (~g~, ~s~, ~n~, …) mean nothing to ox_lib; strip them to plain text.
+    private static readonly Regex GtaCodes = new(@"~[a-zA-Z0-9]~", RegexOptions.Compiled);
 
     public static void Info(MenuText text, int durationMs = DefaultDurationMs) =>
         Show(NotificationStyle.Info, text, durationMs);
@@ -56,9 +36,8 @@ public static class Notifications
     public static void Error(MenuText text, int durationMs = DefaultDurationMs) =>
         Show(NotificationStyle.Error, text, durationMs);
 
-    /// <summary>For anything raised during startup. The page is not listening that early, and the stack draws
-    /// above the minimap, which is behind the loading screen anyway. Returns immediately when the player
-    /// is already in, so a caller that runs both at startup and at runtime can use it unconditionally.</summary>
+    /// <summary>For anything raised during startup. Returns immediately when the player is already in,
+    /// so a caller that runs both at startup and at runtime can use it unconditionally.</summary>
     public static async Task ShowWhenVisibleAsync(NotificationStyle style, MenuText text, int durationMs = DefaultDurationMs)
     {
         for (var attempt = 0; attempt < MaxVisibilityChecks; attempt++)
@@ -71,8 +50,6 @@ public static class Notifications
             await API.Delay(VisibilityCheckMs);
         }
 
-        // Shown even if the checks never passed. A player stuck on a black screen has bigger problems, and a
-        // message they might miss beats one that is silently never sent.
         Show(style, text, durationMs);
     }
 
@@ -82,128 +59,52 @@ public static class Notifications
         int durationMs = DefaultDurationMs,
         string? source = null)
     {
-        var message = text.Resolve(Localizer.Current);
+        var message = StripGtaCodes(text.Resolve(Localizer.Current));
 
         if (string.IsNullOrWhiteSpace(message))
         {
             return;
         }
 
-        // Read once and sent with the message, so a notification raised during a pause is drawn the way the
-        // ones already on screen are instead of waiting for the next poll to catch up.
-        var paused = Native.IsPauseMenuActive();
+        var title = string.IsNullOrWhiteSpace(source) ? "vMenu" : StripGtaCodes(source);
 
-        Native.SendNuiMessage(BuildMessage(Name(style), message, durationMs, source, paused));
-
-        Watch(durationMs, paused);
-    }
-
-    // An estimate, never the truth: the page owns the timers, and this side only needs to know when
-    // watching is pointless. It rounds up on a repeat, and falls short only when messages arrive faster
-    // than the page shows them, where the ones still queued go without their blur and their extra time.
-    private static void Watch(int durationMs, bool paused)
-    {
-        var until = Native.GetGameTimer() + durationMs + ExitGraceMs;
-
-        if (until > _liveUntil)
-        {
-            _liveUntil = until;
-        }
-
-        // Registered on the first message rather than from an Initialize, so a client that never notifies
-        // never lists a loop, and nothing has to be ordered in front of this.
-        _pauseTick ??= TickRegistry.Register(
-            "Notifications.Pause",
-            PollPause,
-            TickRate.Every(PauseCheckIntervalMs),
-            () => _liveUntil > Native.GetGameTimer(),
-            () => _polledAt = Native.GetGameTimer());
-
-        // The page is told the state on every message, so the poll has nothing left to announce.
-        _paused = paused;
-
-        _pauseTick.Reevaluate();
-    }
-
-    private static void PollPause()
-    {
-        var now = Native.GetGameTimer();
-        var paused = Native.IsPauseMenuActive();
-
-        // The page holds its messages for as long as the pause menu is up, so this window holds with them.
-        if (paused)
-        {
-            _liveUntil += now - _polledAt;
-        }
-
-        _polledAt = now;
-
-        if (paused != _paused)
-        {
-            _paused = paused;
-
-            // Mirrors the grace the page hands back, so watching does not end while a message still lives on it.
-            if (!paused)
+        // Primitives only across EmitLocal: the Lua bridge decodes this JSON for lib.notify.
+        NativeFixer.EmitLocal(
+            "vMenu:oxNotify",
+            ClientJson.Serialize(new OxNotifyMessage
             {
-                _liveUntil += PauseGraceMs;
-            }
-
-            Native.SendNuiMessage(paused ? PausedMessage : ResumedMessage);
-        }
-
-        // Conditions are only re-run on demand, so the loop has to be the one to notice it is done.
-        if (now >= _liveUntil)
-        {
-            _pauseTick?.Reevaluate();
-        }
+                Title = title,
+                Description = message,
+                Type = Name(style),
+                Duration = durationMs,
+                Position = "top-right",
+            }));
     }
 
-    private static string BuildMessage(string style, string text, int durationMs, string? source, bool paused)
+    private static string StripGtaCodes(string text)
     {
-        var (left, bottom, width) = HudAnchor.AboveMinimap();
-
-        return ClientJson.Serialize(new NotifyMessage
+        if (string.IsNullOrEmpty(text))
         {
-            Style = style,
-            Text = text,
-            Duration = durationMs,
-            Footer = string.IsNullOrWhiteSpace(source) ? null : source,
-            Paused = paused,
-            Anchor = new AnchorBox
-            {
-                Left = HudAnchor.Fraction(left),
-                Bottom = HudAnchor.Fraction(bottom),
-                Width = HudAnchor.Fraction(width),
-            },
-        });
+            return text;
+        }
+
+        return GtaCodes.Replace(text, string.Empty).Trim();
     }
 
-    private sealed class NotifyMessage
+    private sealed class OxNotifyMessage
     {
-        public string Type { get; } = "notify";
+        public required string Title { get; init; }
 
-        public required string Style { get; init; }
+        public required string Description { get; init; }
 
-        public required string Text { get; init; }
+        public required string Type { get; init; }
 
         public required int Duration { get; init; }
 
-        public string? Footer { get; init; }
-
-        public required bool Paused { get; init; }
-
-        public required AnchorBox Anchor { get; init; }
+        public required string Position { get; init; }
     }
 
-    private sealed class AnchorBox
-    {
-        public required float Left { get; init; }
-
-        public required float Bottom { get; init; }
-
-        public required float Width { get; init; }
-    }
-
+    // ox_lib types: info | success | warning | error
     private static string Name(NotificationStyle style) => style switch
     {
         NotificationStyle.Success => "success",

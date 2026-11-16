@@ -152,6 +152,25 @@
   </Target>
 
   <!--
+    Shared client Lua (Echo911 ox_lib notify bridge, and anything else that is not flavor-specific).
+    Overwritten every build like the UI. Lands next to the client assemblies.
+  -->
+  <ItemGroup Condition="'$(IsResourceRootProject)' == 'true'">
+    <ResourceSharedClientScriptFile Include="$(RepoRoot)assets\shared\client\**\*" />
+  </ItemGroup>
+
+  <Target Name="CopyResourceSharedClientScriptFiles"
+          AfterTargets="Build"
+          Condition="'$(IsResourceRootProject)' == 'true'"
+          Inputs="@(ResourceSharedClientScriptFile)"
+          Outputs="@(ResourceSharedClientScriptFile -> '$(ResourceRoot)client\%(RecursiveDir)%(Filename)%(Extension)')">
+
+    <Copy SourceFiles="@(ResourceSharedClientScriptFile)"
+          DestinationFiles="@(ResourceSharedClientScriptFile -> '$(ResourceRoot)client\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <!--
     Lua that ships alongside the server assemblies. Overwritten every build like the UI: it is
     vMenu's own code, not something an owner edits. The server projects write their DLLs into the
     same folder, which is why this copies into server/ rather than a folder of its own.

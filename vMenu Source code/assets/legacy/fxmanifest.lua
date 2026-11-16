@@ -4,10 +4,12 @@ games { 'gta5' }
 
 -- Resource stuff
 name 'vMenu Enhanced'
-description 'vMenu Enhanced for regular FiveM (GTA V Legacy). Server sided trainer/menu with custom permissions.'
+description 'vMenu Enhanced for regular FiveM (GTA V Legacy). Server sided trainer/menu with custom permissions. Echo911: notifications via ox_lib.'
 version 'versiongoeshere'
 author 'Tom Grobbe'
 url 'https://github.com/TomGrobbe/vMenu/'
+
+dependency 'ox_lib'
 
 ui_page 'ui/index.html'
 
@@ -22,9 +24,12 @@ files {
     'client/*.dll',
 }
 
+shared_script '@ox_lib/init.lua'
+
 -- Client assembly
 client_script 'client/vMenu.Legacy.Core.net.dll'
 client_script 'client/struct_natives.lua'
+client_script 'client/ox_notify.lua'
 
 node_version '22'
 
