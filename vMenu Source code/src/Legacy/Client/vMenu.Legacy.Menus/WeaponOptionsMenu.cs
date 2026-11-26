@@ -82,20 +82,43 @@ public sealed class WeaponOptionsMenu : MenuDefinition
             menu.Entries.Add(new SeparatorEntry(Loc.WeaponOptions.GroupCategories));
         }
 
-        foreach (var category in _categories)
+        // Echo911: ox catalog nests as 原版武器/添加式武器 → ammo|投掷|近战 → weapons.
+        var grouped = _categories
+            .GroupBy(category => string.IsNullOrWhiteSpace(category.Group) ? string.Empty : category.Group)
+            .ToList();
+
+        foreach (var group in grouped)
         {
-            var current = category;
+            if (group.Key.Length == 0)
+            {
+                foreach (var category in group)
+                {
+                    AddCategoryEntry(menu, category);
+                }
+
+                continue;
+            }
+
+            var groupName = group.Key;
+            var children = group.ToArray();
 
             menu.Entries.Add(new SubmenuEntry
             {
-                Text = MenuText.Literal(current.Name),
+                Text = MenuText.Literal(groupName),
                 Description = MenuText.Key(
                     Loc.WeaponOptions.CategoryDescription,
-                    ("category", MenuText.Literal(current.Name))),
-                MenuTitle = MenuText.Literal(current.Name),
+                    ("category", MenuText.Literal(groupName))),
+                MenuTitle = MenuText.Literal(groupName),
                 MenuSubtitle = MenuText.Key(Loc.WeaponOptions.CategorySubtitle),
-                Gate = MenuGate.When(() => ClientWeaponPermissions.CanUseCategory(current.Name)),
-                Build = categoryMenu => BuildCategoryMenu(categoryMenu, current),
+                Gate = MenuGate.When(() => children.Any(child =>
+                    ClientWeaponPermissions.CanUseCategory(child.PermissionKey))),
+                Build = groupMenu =>
+                {
+                    foreach (var category in children)
+                    {
+                        AddCategoryEntry(groupMenu, category);
+                    }
+                },
             });
         }
 
@@ -103,6 +126,23 @@ public sealed class WeaponOptionsMenu : MenuDefinition
         {
             menu.Entries.Add(new ButtonEntry(Loc.WeaponOptions.Empty));
         }
+    }
+
+    private void AddCategoryEntry(MenuBuilder menu, WeaponCategory category)
+    {
+        var current = category;
+
+        menu.Entries.Add(new SubmenuEntry
+        {
+            Text = MenuText.Literal(current.Name),
+            Description = MenuText.Key(
+                Loc.WeaponOptions.CategoryDescription,
+                ("category", MenuText.Literal(current.Name))),
+            MenuTitle = MenuText.Literal(current.Name),
+            MenuSubtitle = MenuText.Key(Loc.WeaponOptions.CategorySubtitle),
+            Gate = MenuGate.When(() => ClientWeaponPermissions.CanUseCategory(current.PermissionKey)),
+            Build = categoryMenu => BuildCategoryMenu(categoryMenu, current),
+        });
     }
 
     private void BuildTopLevel(MenuBuilder menu)
@@ -165,7 +205,7 @@ public sealed class WeaponOptionsMenu : MenuDefinition
 
     private void BuildCategoryMenu(MenuBuilder categoryMenu, WeaponCategory category)
     {
-        var categoryName = category.Name;
+        var categoryKey = category.PermissionKey;
 
         foreach (var weapon in category.Weapons)
         {
@@ -185,7 +225,7 @@ public sealed class WeaponOptionsMenu : MenuDefinition
                 LeftIcon = MenuItem.Icon.GUN,
                 Gate = MenuGate.When(() =>
                     CatalogValidity.IsValidWeapon(current.SpawnName)
-                    && ClientWeaponPermissions.CanUseWeapon(current.SpawnName, categoryName)),
+                    && ClientWeaponPermissions.CanUseWeapon(current.SpawnName, categoryKey)),
                 ReadBehaviour = () => CatalogValidity.IsValidWeapon(current.SpawnName) ? null : GateBehaviour.Lock,
                 ReadLockedDescription = () => CatalogValidity.IsValidWeapon(current.SpawnName)
                     ? MenuText.Empty
@@ -194,7 +234,7 @@ public sealed class WeaponOptionsMenu : MenuDefinition
                 // The weapon's own menu is built in the frame it opens, which is too late to ask about its
                 // components, so highlighting the row that opens it is the cue instead.
                 OnHighlighted = _ => RequestComponentStats(hash),
-                OnSelected = _ => OpenWeapon(current, categoryName, hash),
+                OnSelected = _ => OpenWeapon(current, categoryKey, hash),
             });
         }
     }

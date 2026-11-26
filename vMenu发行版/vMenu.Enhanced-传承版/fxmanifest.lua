@@ -42,4 +42,5 @@ server_scripts {
     'server/net_bridge.js',
     'server/vMenu.Legacy.Core.Server.net.dll',
     'server/ox_inventory_weapons.lua',
+    'server/ox_inventory_catalog.lua',
 }

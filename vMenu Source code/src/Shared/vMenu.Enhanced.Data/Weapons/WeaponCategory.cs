@@ -2,9 +2,17 @@ namespace vMenu.Enhanced.Data.Weapons;
 
 public sealed class WeaponCategory
 {
+    /// <summary>Leaf title shown in the menu (ammo type, 投掷物, 近战, …).</summary>
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>Echo911: top bucket — 原版武器 or 添加式武器. Empty keeps a flat menu.</summary>
+    public string Group { get; set; } = string.Empty;
+
     public List<WeaponEntry> Weapons { get; set; } = [];
+
+    /// <summary>Stable ACE key: "原版武器/ammo-9" or just Name when Group is empty.</summary>
+    public string PermissionKey =>
+        string.IsNullOrWhiteSpace(Group) ? Name : $"{Group}/{Name}";
 }
 
 public sealed class WeaponEntry

@@ -24,10 +24,10 @@ public static class ClientWeaponPermissions
         WhitelistedWeapons.Contains(spawnName);
 
     // Whether a whole category submenu should open. Whitelisted weapons inside an allowed category still
-    // have to pass CanUseWeapon.
+    // have to pass CanUseWeapon. categoryName may be a leaf title or an Echo911 "Group/Name" key.
     public static bool CanUseCategory(string categoryName) =>
         ClientPermissions.IsAllowed(
-            WeaponCategories.ForCategory(CategoryName.ToPermissionSegment(categoryName)));
+            WeaponCategories.ForCategory(CategoryName.ToWeaponCategorySegment(categoryName)));
 
     public static bool CanUseWeapon(string spawnName, string categoryName) =>
         IsWhitelisted(spawnName)

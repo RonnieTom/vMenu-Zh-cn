@@ -283,7 +283,7 @@ public static class WeaponInventory
         {
             foreach (var weapon in category.Weapons)
             {
-                yield return (weapon.SpawnName, category.Name);
+                yield return (weapon.SpawnName, category.PermissionKey);
             }
         }
     }

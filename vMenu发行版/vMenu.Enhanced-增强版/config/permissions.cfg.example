@@ -392,6 +392,8 @@ add_ace group.admin "vMenu.Enhanced.Menus.All" allow
       # from config/weapons.json
       add_ace builtin.everyone "vMenu.Enhanced.Menus.WeaponOptions.Categories.assault_rifles" allow
       # from config/weapons.json
+      add_ace builtin.everyone "vMenu.Enhanced.Menus.WeaponOptions.Categories.c989e3ea4_c8c2798d5" allow
+      # from config/weapons.json
       add_ace builtin.everyone "vMenu.Enhanced.Menus.WeaponOptions.Categories.handguns" allow
       # from config/weapons.json
       add_ace builtin.everyone "vMenu.Enhanced.Menus.WeaponOptions.Categories.heavy_weapons" allow
@@ -401,8 +403,6 @@ add_ace group.admin "vMenu.Enhanced.Menus.All" allow
       add_ace builtin.everyone "vMenu.Enhanced.Menus.WeaponOptions.Categories.shotguns" allow
       # from config/weapons.json
       add_ace builtin.everyone "vMenu.Enhanced.Menus.WeaponOptions.Categories.sniper_rifles" allow
-      # from config/weapons.json
-      add_ace builtin.everyone "vMenu.Enhanced.Menus.WeaponOptions.Categories.sub_light_machine_guns" allow
       # from config/weapons.json
       add_ace builtin.everyone "vMenu.Enhanced.Menus.WeaponOptions.Categories.throwables" allow
     add_ace builtin.everyone "vMenu.Enhanced.Menus.WeaponOptions.GameLoadouts" allow

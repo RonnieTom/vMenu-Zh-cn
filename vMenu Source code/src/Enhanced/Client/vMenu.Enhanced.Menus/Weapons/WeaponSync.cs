@@ -34,7 +34,7 @@ public static class WeaponSync
             {
                 if (string.Equals(weapon.SpawnName, spawnName, StringComparison.OrdinalIgnoreCase))
                 {
-                    return (weapon.SpawnName, weapon.Label, category.Name);
+                    return (weapon.SpawnName, weapon.Label, category.PermissionKey);
                 }
             }
         }
@@ -71,7 +71,31 @@ public static class WeaponSync
         if (!HasReceived)
         {
             Log.Error($"[Weapons] No weapons received after {WaitTimeout}ms, so the menu is being built empty.");
+            return;
         }
+
+        // Echo911: ox_inventory catalog may replace the fallback a moment later (adds Group = 原版/添加式).
+        var oxWaited = 0;
+        const int oxWaitTimeout = 5000;
+
+        while (!HasOxGroups() && oxWaited < oxWaitTimeout)
+        {
+            await API.Delay(250);
+            oxWaited += 250;
+        }
+    }
+
+    private static bool HasOxGroups()
+    {
+        foreach (var category in CachedCategories)
+        {
+            if (!string.IsNullOrWhiteSpace(category.Group))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void OnReceived(string categories, string components)

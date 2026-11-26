@@ -67,15 +67,18 @@ public static class CategoryName
             ["Cutscene Characters (A - J)"] = "cutscene_characters_a_j",
             ["Cutscene Characters (K - Z)"] = "cutscene_characters_k_z",
 
-            // Weapons — Chinese display
+            // Weapons — Chinese display (legacy firearm-type groups + Echo911 ox groups)
             ["手枪"] = "handguns",
             ["突击步枪"] = "assault_rifles",
             ["霰弹枪"] = "shotguns",
             ["冲锋枪/轻机枪"] = "sub_light_machine_guns",
             ["投掷物"] = "throwables",
             ["近战武器"] = "melee",
+            ["近战"] = "melee",
             ["重型武器"] = "heavy_weapons",
             ["狙击步枪"] = "sniper_rifles",
+            ["原版武器"] = "vanilla",
+            ["添加式武器"] = "addon",
 
             // Weapons — English originals
             ["Handguns"] = "handguns",
@@ -86,7 +89,37 @@ public static class CategoryName
             ["Melee"] = "melee",
             ["Heavy Weapons"] = "heavy_weapons",
             ["Sniper Rifles"] = "sniper_rifles",
+            ["Vanilla"] = "vanilla",
+            ["Addon"] = "addon",
         };
+
+    /// <summary>ACE segment for a weapon category that may include an Echo911 Group prefix.</summary>
+    public static string ToWeaponCategorySegment(string permissionKey)
+    {
+        if (string.IsNullOrWhiteSpace(permissionKey))
+        {
+            return string.Empty;
+        }
+
+        var parts = permissionKey.Split('/');
+        if (parts.Length == 1)
+        {
+            return ToPermissionSegment(parts[0]);
+        }
+
+        var segments = new List<string>(parts.Length);
+
+        foreach (var part in parts)
+        {
+            var segment = ToPermissionSegment(part.Trim());
+            if (segment.Length > 0)
+            {
+                segments.Add(segment);
+            }
+        }
+
+        return string.Join("_", segments);
+    }
 
     /// <summary>Lowercased ASCII segment. Empty only when the name was blank. Non-ASCII display
     /// names (e.g. Chinese category titles) are mapped to stable English slugs so ACE permissions

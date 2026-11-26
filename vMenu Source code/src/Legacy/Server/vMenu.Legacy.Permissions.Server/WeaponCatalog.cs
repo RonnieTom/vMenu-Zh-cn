@@ -57,7 +57,7 @@ public static partial class WeaponCatalog
         foreach (var property in root.Properties())
         {
             var name = property.Name.Trim();
-            var segment = CategoryName.ToPermissionSegment(name);
+            var segment = CategoryName.ToWeaponCategorySegment(name);
 
             if (segment.Length == 0)
             {
