@@ -1,14 +1,11 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-using CitizenFX.Core;
 using CitizenFX.Core.Native;
 
 using vMenu.Enhanced.Data.Weapons;
 using vMenu.Enhanced.Logging;
 using vMenu.Enhanced.Serialization.Server;
-
-using vMenu.Legacy.Hosting;
 
 namespace vMenu.Enhanced.Permissions.Server;
 
@@ -67,14 +64,10 @@ public static class WeaponComponentCatalog
 
         foreach (var component in root.Properties())
         {
-            if (component.Name.Trim().ToUpperInvariant() is not { Length: > 0 } spawnName)
-            {
-                continue;
-            }
+            var spawnName = component.Name.Trim();
 
-            if (component.Value.Type != JTokenType.String)
+            if (spawnName.Length == 0)
             {
-                Log.Warning($"[Permissions] Skipping component '{spawnName}': the text to show for it has to be written in quotes.");
                 continue;
             }
 
@@ -84,12 +77,65 @@ public static class WeaponComponentCatalog
                 continue;
             }
 
-            var label = ((string?)component.Value)?.Trim();
+            if (component.Value.Type == JTokenType.String)
+            {
+                var label = ((string?)component.Value)?.Trim();
+
+                Components.Add(new WeaponComponentEntry
+                {
+                    SpawnName = spawnName,
+                    Label = string.IsNullOrEmpty(label) ? spawnName : label,
+                });
+                continue;
+            }
+
+            if (component.Value is not JObject body)
+            {
+                Log.Warning($"[Permissions] Skipping component '{spawnName}': expected a label string or an object.");
+                continue;
+            }
+
+            var labelText = spawnName;
+            var type = string.Empty;
+            var natives = new List<string>();
+
+            if (body["label"]?.Type == JTokenType.String)
+            {
+                var read = ((string?)body["label"])?.Trim();
+                if (!string.IsNullOrEmpty(read))
+                {
+                    labelText = read;
+                }
+            }
+
+            if (body["type"]?.Type == JTokenType.String)
+            {
+                type = ((string?)body["type"])?.Trim() ?? string.Empty;
+            }
+
+            if (body["components"] is JArray list)
+            {
+                foreach (var entry in list)
+                {
+                    if (entry.Type != JTokenType.String)
+                    {
+                        continue;
+                    }
+
+                    var native = ((string?)entry)?.Trim();
+                    if (!string.IsNullOrEmpty(native))
+                    {
+                        natives.Add(native);
+                    }
+                }
+            }
 
             Components.Add(new WeaponComponentEntry
             {
                 SpawnName = spawnName,
-                Label = string.IsNullOrEmpty(label) ? spawnName : label,
+                Label = labelText,
+                Type = type,
+                NativeComponents = natives,
             });
         }
     }

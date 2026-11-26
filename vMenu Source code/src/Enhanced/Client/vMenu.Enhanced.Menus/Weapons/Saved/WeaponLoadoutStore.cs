@@ -130,7 +130,7 @@ public static class WeaponLoadoutStore
 
             foreach (var component in WeaponComponentProbe.For(hash))
             {
-                if (WeaponInventory.HasComponent(hash, API.Hash(component.SpawnName)))
+                if (WeaponInventory.HasComponent(hash, component))
                 {
                     components.Add(component.SpawnName);
                 }

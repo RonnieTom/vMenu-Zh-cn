@@ -1,18 +1,20 @@
-using CitizenFX.Core;
 using CitizenFX.Core.Native;
 
+using vMenu.Enhanced.BrokenNatives;
+using vMenu.Enhanced.Data.Weapons;
 using vMenu.Enhanced.Permissions;
 
 using WeaponOptionsPermissions = vMenu.Enhanced.Data.Permissions.Menus.WeaponOptions;
 
 using vMenu.Legacy.Hosting;
 
-using vMenu.Enhanced.BrokenNatives;
-
 namespace vMenu.Enhanced.Menus.Weapons;
 
 // The verbs live here rather than in the menu so the rows stay declarative, and so the permission
 // check sits next to the thing it guards instead of only on the row that happens to offer it.
+//
+// Echo911: when ox_inventory is running, weapons and attachments are inventory items (WEAPON_*, at_*)
+// rather than GiveWeaponToPed / GiveWeaponComponentToPed.
 public static class WeaponInventory
 {
     private const string Unarmed = "weapon_unarmed";
@@ -20,8 +22,15 @@ public static class WeaponInventory
     // What the game hands out when it is not told a number.
     private const int FallbackAmmo = 250;
 
-    public static bool Has(uint weaponHash) =>
-        NativeFixer.HasPedGotWeapon(API.PlayerPedId(), weaponHash, 0);
+    public static bool Has(uint weaponHash)
+    {
+        if (OxInventoryWeapons.Available && TrySpawnName(weaponHash, out var spawn))
+        {
+            return OxInventoryWeapons.HasWeaponItem(spawn);
+        }
+
+        return NativeFixer.HasPedGotWeapon(API.PlayerPedId(), weaponHash, 0);
+    }
 
     public static int TintCount(uint weaponHash) =>
         Math.Max(1, API.GetWeaponTintCount(weaponHash));
@@ -32,6 +41,11 @@ public static class WeaponInventory
     public static void SetTint(uint weaponHash, int tint)
     {
         if (!ClientPermissions.IsAllowed(WeaponOptionsPermissions.Modify) || !Has(weaponHash))
+        {
+            return;
+        }
+
+        if (!NativeFixer.HasPedGotWeapon(API.PlayerPedId(), weaponHash, 0))
         {
             return;
         }
@@ -50,21 +64,35 @@ public static class WeaponInventory
     {
         if (Has(weaponHash))
         {
-            API.RemoveWeaponFromPed(API.PlayerPedId(), weaponHash);
-
+            Remove(weaponHash);
             return false;
         }
 
         Give(weaponHash);
-
         return true;
     }
 
     public static void Give(uint weaponHash)
     {
-        API.GiveWeaponToPed(API.PlayerPedId(), weaponHash, MaxAmmo(weaponHash), false, true);
+        if (OxInventoryWeapons.Available && TrySpawnName(weaponHash, out var spawn))
+        {
+            OxInventoryWeapons.GiveWeapon(spawn, MaxAmmo(weaponHash));
+            return;
+        }
 
+        API.GiveWeaponToPed(API.PlayerPedId(), weaponHash, MaxAmmo(weaponHash), false, true);
         Refill(weaponHash);
+    }
+
+    public static void Remove(uint weaponHash)
+    {
+        if (OxInventoryWeapons.Available && TrySpawnName(weaponHash, out var spawn))
+        {
+            OxInventoryWeapons.RemoveWeapon(spawn);
+            return;
+        }
+
+        API.RemoveWeaponFromPed(API.PlayerPedId(), weaponHash);
     }
 
     // Does nothing when the weapon is not held, so nothing is given by accident.
@@ -73,6 +101,12 @@ public static class WeaponInventory
         if (!Has(weaponHash))
         {
             return false;
+        }
+
+        if (OxInventoryWeapons.Available && TrySpawnName(weaponHash, out var spawn))
+        {
+            OxInventoryWeapons.RefillWeapon(spawn, MaxAmmo(weaponHash));
+            return true;
         }
 
         var ped = API.PlayerPedId();
@@ -86,12 +120,19 @@ public static class WeaponInventory
     // Weapons this player is not allowed are skipped, whether they came with the game or with an addon.
     public static int GiveAll()
     {
+        var allowed = Allowed().Select(entry => entry.SpawnName).ToList();
+
+        if (OxInventoryWeapons.Available)
+        {
+            OxInventoryWeapons.GiveAll(allowed);
+            return allowed.Count;
+        }
+
         var given = 0;
 
-        foreach (var (weapon, _) in Allowed())
+        foreach (var spawn in allowed)
         {
-            Give(Hashing.Joaat(weapon));
-
+            Give(Hashing.Joaat(spawn));
             given++;
         }
 
@@ -102,7 +143,16 @@ public static class WeaponInventory
         return given;
     }
 
-    public static void RemoveAll() => API.RemoveAllPedWeapons(API.PlayerPedId(), true);
+    public static void RemoveAll()
+    {
+        if (OxInventoryWeapons.Available)
+        {
+            OxInventoryWeapons.RemoveAll(Listed().Select(entry => entry.SpawnName));
+            return;
+        }
+
+        API.RemoveAllPedWeapons(API.PlayerPedId(), true);
+    }
 
     public static int RefillAll()
     {
@@ -122,8 +172,26 @@ public static class WeaponInventory
     // Walks the same list RefillAll does, so the two cannot cover different weapons.
     public static int SetAllAmmo(int ammo)
     {
+        if (OxInventoryWeapons.Available)
+        {
+            var changed = 0;
+
+            foreach (var (weapon, _) in Listed())
+            {
+                if (!OxInventoryWeapons.HasWeaponItem(weapon))
+                {
+                    continue;
+                }
+
+                OxInventoryWeapons.RefillWeapon(weapon, Math.Min(ammo, MaxAmmo(Hashing.Joaat(weapon))));
+                changed++;
+            }
+
+            return changed;
+        }
+
         var ped = API.PlayerPedId();
-        var changed = 0;
+        var nativeChanged = 0;
 
         foreach (var (weapon, _) in Listed())
         {
@@ -136,18 +204,43 @@ public static class WeaponInventory
 
             NativeFixer.SetPedAmmo(ped, hash, Math.Min(ammo, MaxAmmo(hash)), false);
 
-            changed++;
+            nativeChanged++;
         }
 
-        return changed;
+        return nativeChanged;
+    }
+
+    public static bool HasComponent(uint weaponHash, WeaponComponentEntry component)
+    {
+        if (OxInventoryWeapons.Available && TrySpawnName(weaponHash, out var spawn))
+        {
+            return OxInventoryWeapons.HasFittedComponent(spawn, component.SpawnName);
+        }
+
+        var native = WeaponComponentProbe.ResolveNativeHash(weaponHash, component);
+        return native is uint hash
+            && API.HasPedGotWeaponComponent(API.PlayerPedId(), weaponHash, hash);
     }
 
     public static bool HasComponent(uint weaponHash, uint componentHash) =>
         API.HasPedGotWeaponComponent(API.PlayerPedId(), weaponHash, componentHash);
 
-    public static void ToggleComponent(uint weaponHash, uint componentHash)
+    public static void ToggleComponent(uint weaponHash, WeaponComponentEntry component)
     {
         if (!ClientPermissions.IsAllowed(WeaponOptionsPermissions.Modify) || !Has(weaponHash))
+        {
+            return;
+        }
+
+        if (OxInventoryWeapons.Available && TrySpawnName(weaponHash, out var spawn))
+        {
+            var fitted = OxInventoryWeapons.HasFittedComponent(spawn, component.SpawnName);
+            OxInventoryWeapons.ToggleComponent(spawn, component.SpawnName, attach: !fitted);
+            return;
+        }
+
+        var native = WeaponComponentProbe.ResolveNativeHash(weaponHash, component);
+        if (native is not uint componentHash)
         {
             return;
         }
@@ -170,6 +263,18 @@ public static class WeaponInventory
 
         API.SetAmmoInClip(ped, weaponHash, clip);
         NativeFixer.SetPedAmmo(ped, weaponHash, reserve, false);
+    }
+
+    public static void ToggleComponent(uint weaponHash, uint componentHash)
+    {
+        foreach (var component in WeaponComponentProbe.For(weaponHash))
+        {
+            if (WeaponComponentProbe.ResolveNativeHash(weaponHash, component) == componentHash)
+            {
+                ToggleComponent(weaponHash, component);
+                return;
+            }
+        }
     }
 
     internal static IEnumerable<(string SpawnName, string Category)> Listed()
@@ -198,5 +303,20 @@ public static class WeaponInventory
                 yield return listed;
             }
         }
+    }
+
+    private static bool TrySpawnName(uint weaponHash, out string spawnName)
+    {
+        foreach (var (spawn, _) in Listed())
+        {
+            if (Hashing.Joaat(spawn) == weaponHash)
+            {
+                spawnName = spawn;
+                return true;
+            }
+        }
+
+        spawnName = string.Empty;
+        return false;
     }
 }

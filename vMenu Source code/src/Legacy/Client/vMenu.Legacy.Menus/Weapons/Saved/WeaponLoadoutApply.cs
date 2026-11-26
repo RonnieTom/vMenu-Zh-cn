@@ -80,6 +80,21 @@ public static class WeaponLoadoutApply
 
     private static async Task GiveAsync(SavedWeapon saved, uint hash)
     {
+        // Echo911: restore as ox_inventory items with attachment metadata when available.
+        if (OxInventoryWeapons.Available)
+        {
+            var oxComponents = saved.Components
+                .Where(static name => name.StartsWith("at_", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            OxInventoryWeapons.GiveWeapon(
+                saved.SpawnName,
+                Math.Max(saved.Ammo, WeaponInventory.MaxAmmo(hash)),
+                oxComponents);
+
+            return;
+        }
+
         var ped = API.PlayerPedId();
 
         // Handed over loaded rather than empty. A weapon given with no rounds is one the game has no reason
@@ -88,18 +103,15 @@ public static class WeaponLoadoutApply
 
         foreach (var component in saved.Components)
         {
-            var componentHash = Hashing.Joaat(component);
+            var componentHash = ResolveComponentHash(hash, component);
 
-            // A component this weapon no longer takes could never report as fitted, so without this the retry
-            // below spends its whole second on it before moving on.
-            if (!API.DoesWeaponTakeWeaponComponent(hash, componentHash))
+            if (componentHash is null)
             {
                 Log.Debug($"[Weapons] '{saved.SpawnName}' no longer takes '{component}', so it was left off.");
-
                 continue;
             }
 
-            if (!await FitAsync(ped, hash, componentHash))
+            if (!await FitAsync(ped, hash, componentHash.Value))
             {
                 Log.Debug($"[Weapons] '{component}' would not fit on '{saved.SpawnName}' within {ComponentTimeoutMs}ms.");
             }
@@ -111,6 +123,20 @@ public static class WeaponLoadoutApply
         }
 
         Fill(ped, hash);
+    }
+
+    private static uint? ResolveComponentHash(uint weaponHash, string componentName)
+    {
+        foreach (var entry in WeaponComponentProbe.For(weaponHash))
+        {
+            if (string.Equals(entry.SpawnName, componentName, StringComparison.OrdinalIgnoreCase))
+            {
+                return WeaponComponentProbe.ResolveNativeHash(weaponHash, entry);
+            }
+        }
+
+        var fallback = Hashing.Joaat(componentName);
+        return API.DoesWeaponTakeWeaponComponent(weaponHash, fallback) ? fallback : null;
     }
 
     // False when the component never took, which is the caller's cue to say so.

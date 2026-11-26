@@ -106,6 +106,9 @@ public static class WeaponSync
 
         HasReceived = true;
 
+        // Echo911: tell the ox_inventory bridge which WEAPON_* / at_* items to watch for menu ticks.
+        OxInventoryWeapons.TrackCatalog();
+
         Log.Debug($"[Weapons] Received {CachedCategories.Count} category/categories and {CachedComponents.Count} component(s).");
     }
 }

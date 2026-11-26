@@ -222,7 +222,10 @@ public sealed class WeaponOptionsMenu : MenuDefinition
     {
         foreach (var component in WeaponComponentProbe.For(weaponHash))
         {
-            WeaponStatistics.RequestComponent(Hashing.Joaat(component.SpawnName));
+            if (WeaponComponentProbe.ResolveNativeHash(weaponHash, component) is uint native)
+            {
+                WeaponStatistics.RequestComponent(native);
+            }
         }
     }
 
@@ -284,7 +287,7 @@ public sealed class WeaponOptionsMenu : MenuDefinition
 
         foreach (var component in WeaponComponentProbe.For(hash))
         {
-            var componentHash = Hashing.Joaat(component.SpawnName);
+            var componentHash = WeaponComponentProbe.ResolveNativeHash(hash, component) ?? 0u;
 
             weaponMenu.Add(new ButtonEntry
             {
@@ -297,7 +300,7 @@ public sealed class WeaponOptionsMenu : MenuDefinition
                 WeaponComponentStats = () => WeaponStatistics.ForComponent(componentHash),
                 // Read live rather than set once, so a component another resource fits shows up here without the
                 // player having to leave the menu and come back.
-                ReadLeftIcon = () => WeaponInventory.HasComponent(hash, componentHash)
+                ReadLeftIcon = () => WeaponInventory.HasComponent(hash, component)
                     ? MenuItem.Icon.TICK
                     : MenuItem.Icon.NONE,
                 OnSelected = _ =>
@@ -308,7 +311,7 @@ public sealed class WeaponOptionsMenu : MenuDefinition
                         return;
                     }
 
-                    WeaponInventory.ToggleComponent(hash, componentHash);
+                    WeaponInventory.ToggleComponent(hash, component);
 
                     Resync(force: true);
                 },
@@ -491,7 +494,7 @@ public sealed class WeaponOptionsMenu : MenuDefinition
 
         var fitted = string.Concat(WeaponComponentProbe
             .For(hash)
-            .Select(component => WeaponInventory.HasComponent(hash, Hashing.Joaat(component.SpawnName)) ? '1' : '0'));
+            .Select(component => WeaponInventory.HasComponent(hash, component) ? '1' : '0'));
 
         return $"{WeaponInventory.Ammo(hash)}:{WeaponInventory.Tint(hash)}:{fitted}";
     }

@@ -72,14 +72,10 @@ public static class WeaponComponentCatalog
 
         foreach (var component in root.EnumerateObject())
         {
-            if (component.Name.Trim().ToUpperInvariant() is not { Length: > 0 } spawnName)
-            {
-                continue;
-            }
+            var spawnName = component.Name.Trim();
 
-            if (component.Value.ValueKind != JsonValueKind.String)
+            if (spawnName.Length == 0)
             {
-                Log.Warning($"[Permissions] Skipping component '{spawnName}': the text to show for it has to be written in quotes.");
                 continue;
             }
 
@@ -89,12 +85,71 @@ public static class WeaponComponentCatalog
                 continue;
             }
 
-            var label = component.Value.GetString()?.Trim();
+            // Legacy flat map: "COMPONENT_X": "WCT_CLIP2"
+            if (component.Value.ValueKind == JsonValueKind.String)
+            {
+                var label = component.Value.GetString()?.Trim();
+
+                Components.Add(new WeaponComponentEntry
+                {
+                    SpawnName = spawnName,
+                    Label = string.IsNullOrEmpty(label) ? spawnName : label,
+                });
+                continue;
+            }
+
+            // Echo911 / ox_inventory object:
+            // "at_flashlight": { "label": "...", "type": "flashlight", "components": ["COMPONENT_..."] }
+            if (component.Value.ValueKind != JsonValueKind.Object)
+            {
+                Log.Warning($"[Permissions] Skipping component '{spawnName}': expected a label string or an object.");
+                continue;
+            }
+
+            var labelText = spawnName;
+            var type = string.Empty;
+            var natives = new List<string>();
+
+            if (component.Value.TryGetProperty("label", out var labelProperty)
+                && labelProperty.ValueKind == JsonValueKind.String)
+            {
+                var read = labelProperty.GetString()?.Trim();
+                if (!string.IsNullOrEmpty(read))
+                {
+                    labelText = read;
+                }
+            }
+
+            if (component.Value.TryGetProperty("type", out var typeProperty)
+                && typeProperty.ValueKind == JsonValueKind.String)
+            {
+                type = typeProperty.GetString()?.Trim() ?? string.Empty;
+            }
+
+            if (component.Value.TryGetProperty("components", out var listProperty)
+                && listProperty.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var entry in listProperty.EnumerateArray())
+                {
+                    if (entry.ValueKind != JsonValueKind.String)
+                    {
+                        continue;
+                    }
+
+                    var native = entry.GetString()?.Trim();
+                    if (!string.IsNullOrEmpty(native))
+                    {
+                        natives.Add(native);
+                    }
+                }
+            }
 
             Components.Add(new WeaponComponentEntry
             {
                 SpawnName = spawnName,
-                Label = string.IsNullOrEmpty(label) ? spawnName : label,
+                Label = labelText,
+                Type = type,
+                NativeComponents = natives,
             });
         }
     }
