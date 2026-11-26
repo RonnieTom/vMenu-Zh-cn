@@ -139,6 +139,9 @@ public static partial class Loc
         [English("~h~{slot}~h~\nNothing worn, ~y~{drawables}~s~ to choose from\nScroll to pick one.")]
         public const string PropRowDescriptionEmpty = "playerappearance.prop.desc.none";
 
+        [English("{count} clothing item(s) in this outfit only exist in the newer version of GTA V and were left out.")]
+        public const string Gen9LeftOut = "playerappearance.gen9.leftout";
+
         #endregion
 
         #region Typing an exact id
@@ -154,6 +157,9 @@ public static partial class Loc
 
         [English("That has to be a whole number between ~y~1~s~ and ~y~{max}~s~.")]
         public const string ExactIdInvalid = "playerappearance.exactid.invalid";
+
+        [English("~r~Number {id} only exists in the newer version of GTA V and cannot be worn on this server.~s~")]
+        public const string ExactIdGen9 = "playerappearance.exactid.gen9";
 
         #endregion
 
