@@ -72,7 +72,7 @@
     flex: none;
     min-width: 1.35rem;
     padding: 0.05rem 0.3rem;
-    border-radius: 0.25rem;
+    border-radius: 0;
     background: var(--vmenu-hud-chip);
     text-align: center;
     font-size: 0.68rem;

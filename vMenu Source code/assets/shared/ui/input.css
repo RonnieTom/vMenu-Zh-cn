@@ -54,7 +54,7 @@
 #prompt-description code {
     padding: 0.05rem 0.3rem;
     border: 1px solid var(--vmenu-input-edge);
-    border-radius: 0.2rem;
+    border-radius: 0;
     background: var(--vmenu-field-bg);
     font-family: var(--vmenu-mono-font);
     font-size: 0.85em;
@@ -79,7 +79,7 @@
     color: var(--vmenu-text);
     background: var(--vmenu-field-bg);
     border: 1px solid var(--vmenu-field-edge);
-    border-radius: 0.3rem;
+    border-radius: 0;
     outline: none;
 }
 
@@ -113,7 +113,7 @@
 
 #suggestions::-webkit-scrollbar-thumb {
     background: var(--vmenu-scrollbar);
-    border-radius: 0.15rem;
+    border-radius: 0;
 }
 
 #suggestions::-webkit-scrollbar-thumb:hover {

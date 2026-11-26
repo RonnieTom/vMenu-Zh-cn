@@ -67,7 +67,7 @@
 
 #speedometer .rail {
     height: 0.12rem;
-    border-radius: 0.12rem;
+    border-radius: 0;
     background: var(--vmenu-hud-track);
     overflow: hidden;
 }
@@ -107,7 +107,7 @@
 #speedometer .health-rail {
     flex: 1 1 auto;
     height: 0.2rem;
-    border-radius: 0.2rem;
+    border-radius: 0;
     background: var(--vmenu-hud-track);
     overflow: hidden;
 }

@@ -122,29 +122,29 @@ internal static class FreecamKeyBindings
 
         SharedAPI.Commands.RegisterCommand($"+{Toggle.Command}", false, onTogglePressed);
         SharedAPI.Commands.RegisterCommand($"-{Toggle.Command}", false, onToggleReleased);
-        Native.RegisterKeyMapping($"+{Toggle.Command}", "vMenu Freecam: Toggle on/off, hold to stay where the camera is", Keyboard, toggleKey);
+        Native.RegisterKeyMapping($"+{Toggle.Command}", "vMenu 自由镜头：开关（按住则留在镜头位置）", Keyboard, toggleKey);
 
-        RegisterHold(Forward, "Move forward", "W", null);
-        RegisterHold(Backward, "Move backward", "S", null);
-        RegisterHold(Left, "Move left", "A", null);
-        RegisterHold(Right, "Move right", "D", null);
-        RegisterHold(Up, "Move up", "PAGEUP", "R1_INDEX");
-        RegisterHold(Down, "Move down", "PAGEDOWN", "L1_INDEX");
-        RegisterHold(ZoomIn, "Zoom in", "ADD", "R2_INDEX");
-        RegisterHold(ZoomOut, "Zoom out", "SUBTRACT", "L2_INDEX");
-        RegisterHold(RollLeft, "Roll left", "LEFT", "LLEFT_INDEX");
-        RegisterHold(RollRight, "Roll right", "RIGHT", "LRIGHT_INDEX");
-        RegisterHold(Fast, "Move faster", "LSHIFT", "RDOWN_INDEX");
-        RegisterHold(Slow, "Move slower", "LCONTROL", "RLEFT_INDEX");
+        RegisterHold(Forward, "前进", "W", null);
+        RegisterHold(Backward, "后退", "S", null);
+        RegisterHold(Left, "左移", "A", null);
+        RegisterHold(Right, "右移", "D", null);
+        RegisterHold(Up, "上升", "PAGEUP", "R1_INDEX");
+        RegisterHold(Down, "下降", "PAGEDOWN", "L1_INDEX");
+        RegisterHold(ZoomIn, "放大", "ADD", "R2_INDEX");
+        RegisterHold(ZoomOut, "缩小", "SUBTRACT", "L2_INDEX");
+        RegisterHold(RollLeft, "左滚转", "LEFT", "LLEFT_INDEX");
+        RegisterHold(RollRight, "右滚转", "RIGHT", "LRIGHT_INDEX");
+        RegisterHold(Fast, "加速移动", "LSHIFT", "RDOWN_INDEX");
+        RegisterHold(Slow, "减速移动", "LCONTROL", "RLEFT_INDEX");
 
-        RegisterTap(Reset, "Reset roll and zoom", Keyboard, "R", "L3_INDEX", isActive);
-        RegisterTap(SpeedUp, "Increase speed", Wheel, "IOM_WHEEL_UP", null, isActive);
-        RegisterTap(SpeedDown, "Decrease speed", Wheel, "IOM_WHEEL_DOWN", null, isActive);
-        RegisterTap(AddKeyframe, "Add keyframe to the path", Keyboard, "INSERT", null, isActive);
-        RegisterTap(DeleteKeyframe, "Delete the last keyframe", Keyboard, "DELETE", null, isActive);
-        RegisterTap(Play, "Play or stop the path", Keyboard, "SPACE", null, isActive);
-        RegisterTap(HideHud, "Hide the HUD", Keyboard, "H", null, isActive);
-        RegisterTap(Hints, "Show or hide the button hints", Keyboard, "K", null, isActive);
+        RegisterTap(Reset, "重置滚转与缩放", Keyboard, "R", "L3_INDEX", isActive);
+        RegisterTap(SpeedUp, "提高速度", Wheel, "IOM_WHEEL_UP", null, isActive);
+        RegisterTap(SpeedDown, "降低速度", Wheel, "IOM_WHEEL_DOWN", null, isActive);
+        RegisterTap(AddKeyframe, "添加路径关键帧", Keyboard, "INSERT", null, isActive);
+        RegisterTap(DeleteKeyframe, "删除上一关键帧", Keyboard, "DELETE", null, isActive);
+        RegisterTap(Play, "播放或停止路径", Keyboard, "SPACE", null, isActive);
+        RegisterTap(HideHud, "隐藏 HUD", Keyboard, "H", null, isActive);
+        RegisterTap(Hints, "显示或隐藏按键提示", Keyboard, "K", null, isActive);
     }
 
     internal static int BindingControl(string command) => API.HashSigned(command) | int.MinValue;
@@ -174,7 +174,7 @@ internal static class FreecamKeyBindings
         }));
 
         SharedAPI.Commands.RegisterCommand(key.Command, false, onPressed);
-        Native.RegisterKeyMapping(key.Command, $"vMenu Freecam: {description}", device, defaultKey);
+        Native.RegisterKeyMapping(key.Command, $"vMenu 自由镜头：{description}", device, defaultKey);
 
         if (padButton is null)
         {
@@ -182,7 +182,7 @@ internal static class FreecamKeyBindings
         }
 
         SharedAPI.Commands.RegisterCommand($"{key.Command}:pad", false, onPressed);
-        Native.RegisterKeyMapping($"{key.Command}:pad", $"vMenu Freecam: {description} (controller)", Pad, padButton);
+        Native.RegisterKeyMapping($"{key.Command}:pad", $"vMenu 自由镜头：{description}（手柄）", Pad, padButton);
     }
 
     // Holds only record the key, so a key already held when the freecam starts keeps working.
@@ -190,7 +190,7 @@ internal static class FreecamKeyBindings
     {
         SharedAPI.Commands.RegisterCommand($"+{key.Command}", false, new Action(() => key.Keyboard = true));
         SharedAPI.Commands.RegisterCommand($"-{key.Command}", false, new Action(() => key.Keyboard = false));
-        Native.RegisterKeyMapping($"+{key.Command}", $"vMenu Freecam: {description}", Keyboard, defaultKey);
+        Native.RegisterKeyMapping($"+{key.Command}", $"vMenu 自由镜头：{description}", Keyboard, defaultKey);
 
         if (padButton is null)
         {
@@ -199,6 +199,6 @@ internal static class FreecamKeyBindings
 
         SharedAPI.Commands.RegisterCommand($"+{key.Command}:pad", false, new Action(() => key.Pad = true));
         SharedAPI.Commands.RegisterCommand($"-{key.Command}:pad", false, new Action(() => key.Pad = false));
-        Native.RegisterKeyMapping($"+{key.Command}:pad", $"vMenu Freecam: {description} (controller)", Pad, padButton);
+        Native.RegisterKeyMapping($"+{key.Command}:pad", $"vMenu 自由镜头：{description}（手柄）", Pad, padButton);
     }
 }

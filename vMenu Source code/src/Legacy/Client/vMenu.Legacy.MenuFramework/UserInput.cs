@@ -1,7 +1,4 @@
-using Newtonsoft.Json;
-
 using CitizenFX.Core;
-using CitizenFX.Core.Native;
 
 using vMenu.Enhanced.Logging;
 using vMenu.Enhanced.Localization;
@@ -11,30 +8,24 @@ using vMenu.Legacy.Hosting;
 
 namespace vMenu.Enhanced.MenuFramework;
 
+/// <summary>Echo911: text prompts go through ox_lib inputDialog instead of vMenu's NUI prompt page.</summary>
 public static class UserInput
 {
-    private const string SubmitCallback = "vMenuPromptSubmit";
+    private const string RequestEvent = "vMenu:oxInput";
 
-    private const string CancelCallback = "vMenuPromptCancel";
-
-    private const string ReadyCallback = "vMenuPromptReady";
-
-    private const string CloseMessage = """{"type":"close"}""";
-
-    private const int ReadyTimeoutMs = 3000;
-
-    // The page's first callback of a session takes seconds; every one after is immediate.
-    private const int FirstReadyTimeoutMs = 15000;
+    private const string ResultEvent = "vMenu:oxInputResult";
 
     // What the page falls back to when a prompt declares no limit, so both ends agree on the cap.
     private const int DefaultMaxLength = 255;
 
+    // ox_lib select stays usable with a short list; larger lists stay as free text.
+    private const int MaxSelectOptions = 80;
+
     private static bool _callbacksRegistered;
-    private static bool _handshaken;
     private static bool _open;
-    private static TaskCompletionSource<string?>? _pending;
-    private static TaskCompletionSource<bool>? _ready;
-    private static int _maxLength = DefaultMaxLength;
+    private static int _nextId;
+    private static TaskCompletionSource<string[]?>? _pending;
+    private static int _pendingId;
 
     /// <summary>What was typed, or null if the player cancelled.</summary>
     public static async Task<string?> GetTextAsync(
@@ -51,9 +42,7 @@ public static class UserInput
         return answers?[0];
     }
 
-    /// <summary>Asks for several things one after another, answering null if the player cancelled any of them.
-    /// One session rather than repeated GetTextAsync calls: the page is only closed and NUI focus only
-    /// dropped at the end, so the next prompt does not need a delay in front of it to come up focused.</summary>
+    /// <summary>Asks for several things in one ox_lib dialog, answering null if the player cancelled.</summary>
     public static async Task<string[]?> GetTextAsync(params InputPrompt[] prompts)
     {
         if (prompts.Length == 0 || _open)
@@ -69,16 +58,32 @@ public static class UserInput
 
         try
         {
-            var answers = new string[prompts.Length];
+            var requestId = ++_nextId;
+            var pending = new TaskCompletionSource<string[]?>();
 
-            for (var index = 0; index < prompts.Length; index++)
+            _pendingId = requestId;
+            _pending = pending;
+
+            BaseScript.TriggerEvent(RequestEvent, ClientJson.Serialize(BuildRequest(requestId, prompts)));
+
+            var answers = await pending.Task;
+
+            if (answers is null)
             {
-                if (await AskAsync(prompts[index]) is not { } answer)
-                {
-                    return null;
-                }
+                return null;
+            }
 
-                answers[index] = answer;
+            if (answers.Length != prompts.Length)
+            {
+                Log.Error($"[Input] ox_lib returned {answers.Length} value(s) for {prompts.Length} prompt(s).");
+
+                return null;
+            }
+
+            for (var index = 0; index < answers.Length; index++)
+            {
+                var max = prompts[index].MaxLength > 0 ? prompts[index].MaxLength : DefaultMaxLength;
+                answers[index] = Capped(answers[index] ?? string.Empty, max);
             }
 
             return answers;
@@ -86,47 +91,12 @@ public static class UserInput
         finally
         {
             _open = false;
-
-            API.SetNuiFocus(false, false);
-            API.SendNuiMessage(CloseMessage);
+            _pending = null;
+            _pendingId = 0;
 
             MenuButtonLock.Release();
         }
     }
-
-    private static async Task<string?> AskAsync(InputPrompt prompt)
-    {
-        var pending = new TaskCompletionSource<string?>();
-        var ready = new TaskCompletionSource<bool>();
-
-        _pending = pending;
-        _ready = ready;
-        _maxLength = prompt.MaxLength > 0 ? prompt.MaxLength : DefaultMaxLength;
-
-        try
-        {
-            API.SendNuiMessage(BuildOpenMessage(prompt));
-
-            API.SetNuiFocus(true, true);
-
-            var timeout = _handshaken ? ReadyTimeoutMs : FirstReadyTimeoutMs;
-
-            if (await Task.WhenAny(ready.Task, BaseScript.Delay(timeout)) != ready.Task)
-            {
-                Log.Error($"[Input] The prompt did not answer within {timeout}ms. Is ui/index.html part of the resource?");
-
-                return null;
-            }
-
-            return await pending.Task;
-        }
-        finally
-        {
-            _pending = null;
-            _ready = null;
-        }
-    }
-
 
     private static void EnsureCallbacks()
     {
@@ -137,125 +107,136 @@ public static class UserInput
 
         _callbacksRegistered = true;
 
-        NuiCallbacks.Register(SubmitCallback, body => _pending?.TrySetResult(Text(body)));
-        NuiCallbacks.Register(CancelCallback, _ => _pending?.TrySetResult(null));
-
-        NuiCallbacks.Register(ReadyCallback, _ =>
-        {
-            _handshaken = true;
-            _ready?.TrySetResult(true);
-        });
+        Script.EventHandlers[ResultEvent] += new Action<string>(OnResult);
     }
 
-    // The page posts what was typed as a JSON string, so the body arrives quoted and escaped.
-    private static string Text(string raw)
+    private static void OnResult(string json)
     {
-        if (raw.Length == 0)
+        if (!ClientJson.TryDeserialize<ResultMessage>(json, out var result) || result is null)
         {
-            return string.Empty;
+            Log.Error($"[Input] Ignoring a bad ox_lib input reply: {json}");
+
+            return;
         }
 
-        if (ClientJson.TryDeserialize<string>(raw, out var text))
+        if (_pending is null || result.Id != _pendingId)
         {
-            return Capped(text ?? string.Empty);
+            return;
         }
 
-        Log.Error($"[Input] A callback body was not the JSON string the page posts: {raw}");
-
-        return string.Empty;
+        _pending.TrySetResult(result.Values);
     }
 
-    // The page's maxLength is a DOM attribute, so anything with the developer tools open can post past
-    // it. Cut here rather than in each caller, so no prompt can answer with more than it asked for.
-    private static string Capped(string text)
+    private static InputRequest BuildRequest(int id, InputPrompt[] prompts)
     {
-        if (text.Length <= _maxLength)
+        var localizer = Localizer.Current;
+        var rows = new InputRow[prompts.Length];
+
+        for (var index = 0; index < prompts.Length; index++)
+        {
+            var prompt = prompts[index];
+            var label = prompt.Title.Resolve(localizer);
+            var description = prompt.Description.Resolve(localizer);
+
+            rows[index] = new InputRow
+            {
+                Label = label,
+                Description = description,
+                Default = prompt.InitialValue,
+                Placeholder = localizer.Get(Loc.Framework.InputPlaceholder),
+                Max = prompt.MaxLength > 0 ? prompt.MaxLength : DefaultMaxLength,
+                Options = OptionsFor(prompt),
+            };
+        }
+
+        return new InputRequest
+        {
+            Id = id,
+            Heading = prompts.Length == 1
+                ? prompts[0].Title.Resolve(localizer)
+                : "vMenu",
+            Rows = rows,
+        };
+    }
+
+    private static SelectOption[]? OptionsFor(InputPrompt prompt)
+    {
+        if (!prompt.SuggestWhenEmpty
+            || prompt.Suggestions is not { Count: > 0 and <= MaxSelectOptions } suggestions)
+        {
+            return null;
+        }
+
+        var options = new SelectOption[suggestions.Count];
+
+        for (var index = 0; index < suggestions.Count; index++)
+        {
+            var suggestion = suggestions[index];
+
+            options[index] = new SelectOption
+            {
+                Value = suggestion.Value,
+                Label = string.IsNullOrWhiteSpace(suggestion.Label) ? suggestion.Value : suggestion.Label,
+            };
+        }
+
+        return options;
+    }
+
+    private static string Capped(string text, int maxLength)
+    {
+        if (text.Length <= maxLength)
         {
             return text;
         }
 
-        var end = _maxLength;
+        var end = maxLength;
 
-        // Never between a surrogate pair: half of one is not valid UTF-8 once it leaves here.
         if (char.IsHighSurrogate(text[end - 1]))
         {
             end--;
         }
 
-        Log.Warning($"[Input] An answer of {text.Length} characters was cut to the {_maxLength} the prompt asked for.");
+        Log.Warning($"[Input] An answer of {text.Length} characters was cut to the {maxLength} the prompt asked for.");
 
         return text[..end];
     }
 
-    private static string BuildOpenMessage(InputPrompt prompt)
+    private sealed class InputRequest
     {
-        var localizer = Localizer.Current;
-        var suggestions = prompt.Suggestions;
-        var rows = new SuggestionRow[suggestions?.Count ?? 0];
+        public required int Id { get; init; }
 
-        for (var index = 0; index < rows.Length; index++)
-        {
-            var suggestion = suggestions![index];
+        public required string Heading { get; init; }
 
-            rows[index] = new SuggestionRow
-            {
-                Value = suggestion.Value,
-                Label = suggestion.Label,
-                Icon = suggestion.Icon ?? string.Empty,
-                Detail = suggestion.Detail ?? string.Empty,
-            };
-        }
-
-        return ClientJson.Serialize(new OpenMessage
-        {
-            Title = prompt.Title.Resolve(localizer),
-            Description = prompt.Description.Resolve(localizer),
-            Value = prompt.InitialValue,
-            MaxLength = prompt.MaxLength,
-            Placeholder = localizer.Get(Loc.Framework.InputPlaceholder),
-            Hint = localizer.Get(Loc.Framework.InputHint),
-            NoMatches = localizer.Get(Loc.Framework.InputNoMatches),
-            SuggestWhenEmpty = prompt.SuggestWhenEmpty,
-            Suggestions = rows,
-        });
+        public required IReadOnlyList<InputRow> Rows { get; init; }
     }
 
-    private sealed class OpenMessage
+    private sealed class InputRow
     {
-        public string Type { get; } = "open";
-
-        public required string Title { get; init; }
+        public required string Label { get; init; }
 
         public required string Description { get; init; }
 
-        public required string Value { get; init; }
-
-        public required int MaxLength { get; init; }
+        public required string Default { get; init; }
 
         public required string Placeholder { get; init; }
 
-        public required string Hint { get; init; }
+        public required int Max { get; init; }
 
-        public required string NoMatches { get; init; }
-
-        public required bool SuggestWhenEmpty { get; init; }
-
-        public required IReadOnlyList<SuggestionRow> Suggestions { get; init; }
+        public SelectOption[]? Options { get; init; }
     }
 
-    // Single letter keys: a spawner sends thousands of these in one message.
-    private sealed class SuggestionRow
+    private sealed class SelectOption
     {
-        [JsonProperty("v")]
         public required string Value { get; init; }
 
-        [JsonProperty("l")]
         public required string Label { get; init; }
+    }
 
-        [JsonProperty("i")]
-        public required string Icon { get; init; }
+    private sealed class ResultMessage
+    {
+        public int Id { get; init; }
 
-        [JsonProperty("d")]
-        public required string Detail { get; init; }
+        public string[]? Values { get; init; }
     }
 }

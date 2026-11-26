@@ -79,7 +79,7 @@
     margin-left: auto;
     padding: 0.02rem 0.28rem;
     border: 1px solid var(--tone-edge);
-    border-radius: 0.6rem;
+    border-radius: 0;
     background: var(--tone-soft);
     font-size: 0.58rem;
     letter-spacing: 0.04em;

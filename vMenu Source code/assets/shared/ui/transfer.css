@@ -72,7 +72,7 @@
     color: var(--vmenu-text);
     background: var(--vmenu-field-bg);
     border: 1px solid var(--vmenu-field-edge);
-    border-radius: 0.3rem;
+    border-radius: 0;
     outline: none;
     resize: none;
     /* Anywhere, because the code is one unbroken run of Base64 with nothing to break on. */
@@ -97,7 +97,7 @@
 
 #transfer .code::-webkit-scrollbar-thumb {
     background: var(--vmenu-scrollbar);
-    border-radius: 0.15rem;
+    border-radius: 0;
 }
 
 #transfer .code::-webkit-scrollbar-thumb:hover {
@@ -146,7 +146,7 @@
     color: var(--vmenu-text);
     background: var(--vmenu-button-bg);
     border: 1px solid var(--vmenu-transfer-edge);
-    border-radius: 0.3rem;
+    border-radius: 0;
     cursor: pointer;
 }
 

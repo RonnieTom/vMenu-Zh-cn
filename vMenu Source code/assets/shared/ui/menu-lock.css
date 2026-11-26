@@ -83,7 +83,7 @@
 #menu-lock .key {
     padding: 0.05rem 0.35rem;
     border: 1px solid var(--vmenu-menu-lock-edge);
-    border-radius: 0.2rem;
+    border-radius: 0;
     background: var(--vmenu-row-alt);
     font-size: 0.62rem;
     font-weight: 700;

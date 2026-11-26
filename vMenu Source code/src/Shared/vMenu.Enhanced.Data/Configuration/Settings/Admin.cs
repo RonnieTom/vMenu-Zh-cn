@@ -48,7 +48,7 @@ public static class Admin
         {
             Description =
                 "How long an announcement stays on screen, in seconds.",
-            Default = 20,
+            Default = 45,
         };
 
     public static int ClampClearAreaRadius(int radius) =>

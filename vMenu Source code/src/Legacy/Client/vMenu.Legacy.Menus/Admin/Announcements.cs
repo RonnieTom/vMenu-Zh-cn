@@ -1,24 +1,16 @@
-using CitizenFX.Core;
-using CitizenFX.Core.Native;
-
 using vMenu.Enhanced.Actions;
 using vMenu.Enhanced.Configuration;
 using vMenu.Enhanced.Data.Actions;
 using vMenu.Enhanced.MenuFramework;
 using vMenu.Enhanced.Localization;
-using vMenu.Enhanced.Serialization;
 
 using AdminSettings = vMenu.Enhanced.Data.Configuration.Settings.Admin;
-
-using vMenu.Legacy.Hosting;
 
 namespace vMenu.Enhanced.Menus.Admin;
 
 public static class Announcements
 {
     private const int TextLimit = 200;
-
-    private static int _nextId = -1;
 
     private static bool _busy;
 
@@ -74,30 +66,14 @@ public static class Announcements
             .Key(Loc.Admin.AnnounceBanner, ("text", MenuText.Literal(text)))
             .Resolve(localizer);
 
-        API.SendNuiMessage(ClientJson.Serialize(new AnnouncementMessage
-        {
-            Id = _nextId--,
-            Title = localizer.Get(Loc.Admin.AnnounceHeading),
-            Text = body,
-            Duration = DisplayMs(),
-        }));
+        // Echo911: announcements use ox_lib notify (same path as other toasts), kept on screen longer.
+        Notifications.Show(
+            NotificationStyle.Info,
+            body,
+            DisplayMs(),
+            localizer.Get(Loc.Admin.AnnounceHeading));
     }
 
     private static int DisplayMs() =>
         Math.Max(1, ClientConfig.Value(AdminSettings.AnnouncementSeconds)) * 1000;
-
-    private sealed class AnnouncementMessage
-    {
-        public string Type { get; } = "staff_alert";
-
-        public string Variant { get; } = "announcement";
-
-        public required int Id { get; init; }
-
-        public required string Title { get; init; }
-
-        public required string Text { get; init; }
-
-        public required int Duration { get; init; }
-    }
 }

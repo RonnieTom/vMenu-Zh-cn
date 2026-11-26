@@ -20,37 +20,37 @@
     --vmenu-text: #f2f2f2;
     --vmenu-text-muted: rgba(242, 242, 242, 0.55);
 
-    --vmenu-accent: #3b8bf5;
-    --vmenu-accent-hover: #4d94f7;
-    --vmenu-accent-text: #ffffff;
-    --vmenu-accent-text-muted: rgba(255, 255, 255, 0.78);
-    --vmenu-accent-soft: rgba(59, 139, 245, 0.16);
-    --vmenu-accent-edge: rgba(59, 139, 245, 0.35);
+    --vmenu-accent: #ffffff;
+    --vmenu-accent-hover: #e6e6e6;
+    --vmenu-accent-text: #080808;
+    --vmenu-accent-text-muted: rgba(8, 8, 8, 0.78);
+    --vmenu-accent-soft: rgba(255, 255, 255, 0.14);
+    --vmenu-accent-edge: rgba(255, 255, 255, 0.32);
 
-    --vmenu-info: #4d94f7;
-    --vmenu-info-soft: rgba(59, 139, 245, 0.16);
-    --vmenu-info-edge: rgba(59, 139, 245, 0.35);
-    --vmenu-success: #58cf90;
-    --vmenu-success-soft: rgba(71, 193, 127, 0.16);
-    --vmenu-success-edge: rgba(71, 193, 127, 0.35);
-    --vmenu-warning: #edb44b;
-    --vmenu-warning-soft: rgba(224, 163, 56, 0.16);
-    --vmenu-warning-edge: rgba(224, 163, 56, 0.35);
-    --vmenu-error: #ef6a60;
-    --vmenu-error-soft: rgba(226, 85, 76, 0.16);
-    --vmenu-error-edge: rgba(226, 85, 76, 0.35);
+    --vmenu-info: #e6e6e6;
+    --vmenu-info-soft: rgba(255, 255, 255, 0.14);
+    --vmenu-info-edge: rgba(255, 255, 255, 0.32);
+    --vmenu-success: #d2d2d2;
+    --vmenu-success-soft: rgba(255, 255, 255, 0.12);
+    --vmenu-success-edge: rgba(255, 255, 255, 0.28);
+    --vmenu-warning: #aaaaaa;
+    --vmenu-warning-soft: rgba(255, 255, 255, 0.10);
+    --vmenu-warning-edge: rgba(255, 255, 255, 0.24);
+    --vmenu-error: #ffffff;
+    --vmenu-error-soft: rgba(255, 255, 255, 0.16);
+    --vmenu-error-edge: rgba(255, 255, 255, 0.36);
 
-    --vmenu-panel-bg: rgba(18, 18, 20, 0.94);
-    --vmenu-panel-edge: rgba(255, 255, 255, 0.08);
-    --vmenu-panel-radius: 0.2rem;
+    --vmenu-panel-bg: rgba(8, 8, 8, 0.96);
+    --vmenu-panel-edge: rgba(255, 255, 255, 0.12);
+    --vmenu-panel-radius: 0;
     --vmenu-panel-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.55);
     --vmenu-row-alt: rgba(255, 255, 255, 0.05);
-    --vmenu-divider: rgba(255, 255, 255, 0.07);
+    --vmenu-divider: rgba(255, 255, 255, 0.10);
     --vmenu-track: rgba(255, 255, 255, 0.06);
     --vmenu-scrollbar: rgba(255, 255, 255, 0.18);
     --vmenu-scrollbar-hover: rgba(255, 255, 255, 0.3);
 
-    --vmenu-dialog-radius: 0.5rem;
+    --vmenu-dialog-radius: 0;
     --vmenu-dialog-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.6);
     --vmenu-dialog-scrim: rgba(0, 0, 0, 0.4);
     --vmenu-field-bg: rgba(0, 0, 0, 0.45);
@@ -58,30 +58,30 @@
     --vmenu-button-bg: rgba(255, 255, 255, 0.05);
     --vmenu-button-hover: rgba(255, 255, 255, 0.1);
 
-    --vmenu-hud-bg: rgba(12, 14, 19, 0.34);
-    --vmenu-hud-edge: rgba(255, 255, 255, 0.09);
-    --vmenu-hud-radius: 0.7rem;
+    --vmenu-hud-bg: rgba(8, 8, 8, 0.72);
+    --vmenu-hud-edge: rgba(255, 255, 255, 0.14);
+    --vmenu-hud-radius: 0;
     --vmenu-hud-shadow: 0 0.1rem 0.7rem rgba(0, 0, 0, 0.25);
     --vmenu-hud-text: var(--vmenu-text);
     --vmenu-hud-text-shadow: 0 0.08rem 0.35rem rgba(0, 0, 0, 0.85);
     --vmenu-hud-muted: rgba(242, 242, 242, 0.6);
-    --vmenu-hud-accent: rgba(138, 190, 255, 0.9);
+    --vmenu-hud-accent: rgba(255, 255, 255, 0.92);
     --vmenu-hud-track: rgba(255, 255, 255, 0.1);
     --vmenu-hud-chip: rgba(255, 255, 255, 0.07);
 
-    --vmenu-good: rgba(126, 217, 137, 0.9);
-    --vmenu-fair: rgba(233, 213, 118, 0.9);
-    --vmenu-poor: rgba(233, 163, 98, 0.9);
-    --vmenu-bad: rgba(230, 118, 118, 0.9);
+    --vmenu-good: rgba(220, 220, 220, 0.9);
+    --vmenu-fair: rgba(190, 190, 190, 0.9);
+    --vmenu-poor: rgba(150, 150, 150, 0.9);
+    --vmenu-bad: rgba(120, 120, 120, 0.9);
     --vmenu-idle: #6f6f6f;
 
     /* The ~r~ style colour codes inside notification text. */
-    --vmenu-code-r: #ef6a60;
-    --vmenu-code-g: #58cf90;
-    --vmenu-code-b: #4d94f7;
-    --vmenu-code-y: #edb44b;
-    --vmenu-code-o: #e8894a;
-    --vmenu-code-p: #b57ae8;
+    --vmenu-code-r: #ffffff;
+    --vmenu-code-g: #d2d2d2;
+    --vmenu-code-b: #e6e6e6;
+    --vmenu-code-y: #aaaaaa;
+    --vmenu-code-o: #c0c0c0;
+    --vmenu-code-p: #b0b0b0;
     --vmenu-code-c: #9b9b9b;
     --vmenu-code-m: #6f6f6f;
     --vmenu-code-u: #101010;
@@ -89,11 +89,11 @@
 
     --vmenu-notification-bg: var(--vmenu-panel-bg);
     --vmenu-notification-edge: var(--vmenu-panel-edge);
-    --vmenu-notification-radius: var(--vmenu-panel-radius);
+    --vmenu-notification-radius: 0;
     --vmenu-notification-shadow: var(--vmenu-panel-shadow);
 
     --vmenu-alert-bg: var(--vmenu-panel-bg);
-    --vmenu-alert-radius: var(--vmenu-panel-radius);
+    --vmenu-alert-radius: 0;
     --vmenu-alert-shadow: var(--vmenu-panel-shadow);
     --vmenu-alert-tone: var(--vmenu-warning);
     --vmenu-alert-tone-soft: var(--vmenu-warning-soft);
@@ -146,15 +146,15 @@
     --vmenu-speedometer-value: var(--vmenu-hud-text);
     --vmenu-speedometer-rail-end: #ffffff;
 
-    --vmenu-forecast-bg: rgba(11, 13, 18, 0.88);
+    --vmenu-forecast-bg: rgba(8, 8, 8, 0.92);
     --vmenu-forecast-soft: rgba(0, 0, 0, 0.32);
     --vmenu-forecast-edge: rgba(255, 255, 255, 0.14);
-    --vmenu-forecast-radius: 0.85rem;
+    --vmenu-forecast-radius: 0;
     --vmenu-forecast-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.6);
     --vmenu-forecast-accent: var(--vmenu-hud-accent);
     --vmenu-forecast-muted: rgba(242, 242, 242, 0.72);
     --vmenu-moon-lit: rgba(242, 242, 242, 0.85);
-    --vmenu-moon-dark: rgba(12, 14, 19, 0.94);
+    --vmenu-moon-dark: rgba(8, 8, 8, 0.96);
     --vmenu-moon-edge: rgba(255, 255, 255, 0.24);
 }
 
