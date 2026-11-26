@@ -66,6 +66,13 @@ setr vMenu.Enhanced.KeyBindings.MenuToggleKey "M"
 # Default value: "F2" (string)
 setr vMenu.Enhanced.KeyBindings.NoClipToggleKey "F2"
 
+# The default key that turns the freecam on and off. Use a key name from
+# https://docs.fivem.net/docs/game-references/input-mapper-parameter-ids/keyboard/.
+# This is only the default key: players can rebind it themselves under
+# Settings, Key Bindings
+# Default value: "F3" (string)
+setr vMenu.Enhanced.KeyBindings.FreecamToggleKey "F3"
+
 # The default key that runs the 'teleport action' (see teleportation menu
 # in-game) Use a key name from
 # https://docs.fivem.net/docs/game-references/input-mapper-parameter-ids/keyboard/.
@@ -103,6 +110,12 @@ setr vMenu.Enhanced.Gameplay.NoClipSmoke true
 
 ### Admin ###
 
+# Makes vMenu staff only. Players without vMenu.Enhanced.Staff cannot open the
+# menu and get none of its features, but staff can still use admin and bully
+# options on them.
+# Default value: "false" (bool)
+setr vMenu.Enhanced.Admin.StaffOnly false
+
 # How far around a player, in metres, the Clear Area button reaches.
 # Default value: "100" (int)
 setr vMenu.Enhanced.Admin.ClearAreaRadius 100
@@ -117,8 +130,8 @@ setr vMenu.Enhanced.Admin.ClosestPlayerRange 3
 setr vMenu.Enhanced.Admin.ScheduledAnnouncements true
 
 # How long an announcement stays on screen, in seconds.
-# Default value: "20" (int)
-setr vMenu.Enhanced.Admin.AnnouncementSeconds 20
+# Default value: "45" (int)
+setr vMenu.Enhanced.Admin.AnnouncementSeconds 45
 
 ### Staff Alerts ###
 

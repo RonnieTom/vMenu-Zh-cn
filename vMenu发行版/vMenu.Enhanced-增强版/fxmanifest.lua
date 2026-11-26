@@ -29,6 +29,8 @@ shared_script '@ox_lib/init.lua'
 -- Client assembly
 client_script 'client/vMenu.Enhanced.Core.dll'
 client_script 'client/ox_notify.lua'
+client_script 'client/ox_input.lua'
+client_script 'client/ox_locale.lua'
 
 -- Linux TLS bridge: net_bridge.js carries HTTPS and WebSocket traffic on Linux and needs Node 22.
 node_version '22'

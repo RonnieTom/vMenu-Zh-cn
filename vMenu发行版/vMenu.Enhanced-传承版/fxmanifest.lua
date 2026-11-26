@@ -30,6 +30,8 @@ shared_script '@ox_lib/init.lua'
 client_script 'client/vMenu.Legacy.Core.net.dll'
 client_script 'client/struct_natives.lua'
 client_script 'client/ox_notify.lua'
+client_script 'client/ox_input.lua'
+client_script 'client/ox_locale.lua'
 
 node_version '22'
 

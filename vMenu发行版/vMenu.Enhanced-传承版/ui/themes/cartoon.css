@@ -26,6 +26,59 @@
     unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+/* vMenu's own screens: notifications, alerts, prompts, the speedometer and everything above the minimap. */
+:root {
+    --vmenu-font: "Fredoka", "Segoe UI", system-ui, sans-serif;
+
+    --vmenu-text: rgb(254 243 217);
+    --vmenu-text-muted: rgb(254 243 217 / 55%);
+
+    --vmenu-accent: rgb(183 155 255);
+    --vmenu-accent-hover: rgb(200 178 255);
+    --vmenu-accent-text: rgb(26 21 35);
+    --vmenu-accent-text-muted: rgb(26 21 35 / 70%);
+    --vmenu-accent-soft: rgb(183 155 255 / 16%);
+    --vmenu-accent-edge: rgb(183 155 255 / 35%);
+
+    --vmenu-info: rgb(183 155 255);
+    --vmenu-info-soft: rgb(183 155 255 / 16%);
+    --vmenu-info-edge: rgb(183 155 255 / 35%);
+    --vmenu-success: rgb(127 224 200);
+    --vmenu-success-soft: rgb(127 224 200 / 16%);
+    --vmenu-success-edge: rgb(127 224 200 / 35%);
+    --vmenu-warning: rgb(255 214 102);
+    --vmenu-warning-soft: rgb(255 214 102 / 16%);
+    --vmenu-warning-edge: rgb(255 214 102 / 35%);
+    --vmenu-error: rgb(255 143 143);
+    --vmenu-error-soft: rgb(255 143 143 / 16%);
+    --vmenu-error-edge: rgb(255 143 143 / 35%);
+
+    --vmenu-panel-bg: rgb(26 21 35 / 97%);
+    --vmenu-panel-edge: rgb(254 243 217 / 10%);
+    --vmenu-panel-radius: 18px;
+    --vmenu-dialog-radius: 18px;
+    --vmenu-row-alt: rgb(254 243 217 / 5%);
+    --vmenu-divider: rgb(254 243 217 / 8%);
+
+    --vmenu-hud-bg: rgb(26 21 35 / 88%);
+    --vmenu-hud-edge: rgb(107 70 224 / 90%);
+    --vmenu-hud-radius: 18px;
+    --vmenu-hud-muted: rgb(254 243 217 / 60%);
+    --vmenu-hud-accent: rgb(183 155 255);
+
+    --vmenu-good: rgb(127 224 200);
+    --vmenu-bad: rgb(255 143 143);
+
+    --vmenu-forecast-bg: rgb(26 21 35 / 97%);
+    --vmenu-forecast-edge: rgb(107 70 224 / 90%);
+    --vmenu-forecast-radius: 18px;
+    --vmenu-forecast-muted: rgb(254 243 217 / 72%);
+    --vmenu-moon-lit: rgb(254 243 217 / 85%);
+    --vmenu-moon-dark: rgb(26 21 35);
+
+    --vmenu-speedometer-rail-end: rgb(254 243 217);
+}
+
 #menuapi {
     --menuapi-font: "GTA Chalet Arrows", "Fredoka", "Segoe UI", system-ui, sans-serif;
 
@@ -39,17 +92,17 @@
     --menuapi-subtitle-text: rgb(254 243 217);
     --menuapi-freemode: rgb(127 224 200);
 
-    --menuapi-rows-bg: rgb(254 243 217 / 97%);
-    --menuapi-row-text: rgb(26 21 35);
-    --menuapi-row-selected-bg: rgb(26 21 35 / 97%);
-    --menuapi-row-selected-text: rgb(254 243 217);
-    --menuapi-row-disabled-text: rgb(26 21 35 / 38%);
-    --menuapi-row-selected-disabled-text: rgb(254 243 217 / 45%);
+    --menuapi-rows-bg: rgb(26 21 35 / 97%);
+    --menuapi-row-text: rgb(254 243 217);
+    --menuapi-row-selected-bg: rgb(183 155 255 / 97%);
+    --menuapi-row-selected-text: rgb(26 21 35);
+    --menuapi-row-disabled-text: rgb(254 243 217 / 38%);
+    --menuapi-row-selected-disabled-text: rgb(26 21 35 / 45%);
 
     --menuapi-header-text: rgb(254 243 217);
     --menuapi-slider-divider: rgb(254 243 217);
 
-    --menuapi-overflow-bg: rgb(251 233 199 / 97%);
+    --menuapi-overflow-bg: rgb(36 29 48 / 97%);
 
     --menuapi-desc-bg: rgb(26 21 35 / 97%);
     --menuapi-desc-rule: rgb(107 70 224 / 90%);
@@ -60,10 +113,10 @@
     --menuapi-stat-upgrade: rgb(127 224 200);
     --menuapi-stat-upgrade-reduced: rgb(255 143 143);
 
-    --menuapi-panel-bg: rgb(254 243 217 / 97%);
-    --menuapi-panel-accent: 74, 47, 176;
-    --menuapi-panel-text: rgb(26 21 35);
-    --menuapi-panel-swatch-selected: rgb(26 21 35);
+    --menuapi-panel-bg: rgb(26 21 35 / 97%);
+    --menuapi-panel-accent: 183, 155, 255;
+    --menuapi-panel-text: rgb(254 243 217);
+    --menuapi-panel-swatch-selected: rgb(254 243 217);
     --menuapi-panel-opacity-bar: rgb(183 155 255);
 }
 
@@ -83,6 +136,34 @@
     border-radius: 0 0 var(--menuapi-radius) var(--menuapi-radius);
 }
 
-#menuapi .menuapi-icon {
-    filter: invert(1);
+#menuapi-buttons {
+    --menuapi-buttons-font: "Fredoka", "Segoe UI", system-ui, sans-serif;
+    --menuapi-buttons-font-size: 18px;
+    --menuapi-buttons-font-weight: 600;
+    --menuapi-buttons-text: rgb(254 243 217);
+
+    --menuapi-buttons-bg: rgb(26 21 35 / 97%);
+    --menuapi-buttons-radius: 18px;
+    --menuapi-buttons-shadow: 0 5px 16px rgb(26 21 35 / 45%);
+    --menuapi-buttons-padding: 0 10px;
+
+    --menuapi-buttons-key-font: "Fredoka", "Segoe UI", system-ui, sans-serif;
+    --menuapi-buttons-key-font-weight: 600;
+    --menuapi-buttons-key-radius: 8px;
+    --menuapi-buttons-key-bg: rgb(254 243 217);
+    --menuapi-buttons-key-text: rgb(26 21 35);
+
+    --menuapi-buttons-pad: rgb(107 70 224);
+    --menuapi-buttons-pad-text: rgb(254 243 217);
+    --menuapi-buttons-a: rgb(127 224 200);
+    --menuapi-buttons-b: rgb(255 143 143);
+    --menuapi-buttons-x: rgb(183 155 255);
+    --menuapi-buttons-y: rgb(255 214 102);
+    --menuapi-buttons-mouse: rgb(254 243 217);
+    --menuapi-buttons-mouse-lines: rgb(26 21 35);
+    --menuapi-buttons-mouse-highlight: rgb(183 155 255);
+    --menuapi-buttons-spinner: rgb(254 243 217);
+    --menuapi-buttons-spinner-alt: rgb(127 224 200);
+    --menuapi-buttons-unbound: rgb(255 143 143);
+    --menuapi-buttons-plus: rgb(183 155 255);
 }
