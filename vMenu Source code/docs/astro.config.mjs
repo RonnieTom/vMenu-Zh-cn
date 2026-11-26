@@ -83,6 +83,7 @@ export default defineConfig({
             { label: 'Installing on FiveM Legacy', link: '/installing/fivem-legacy/' },
             { label: 'Running on Linux', link: '/running-on-linux/' },
             { label: 'Key Bindings', link: '/key-bindings/' },
+            { label: 'FAQ', link: '/faq/' },
           ],
         },
         {
@@ -130,6 +131,7 @@ export default defineConfig({
             { label: 'Custom Character Creator', link: '/menus/character-creator/' },
             { label: 'Filmmaker Menu', link: '/menus/filmmaker-menu/' },
             { label: 'Vehicle Colours', link: '/menus/vehicle-colours/' },
+            { label: 'Vehicle Mines', link: '/menus/vehicle-mines/' },
           ],
         },
         {
